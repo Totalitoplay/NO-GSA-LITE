@@ -504,9 +504,34 @@
             if(data.cantidadTotal > 0) arbolCarpetas.push(data);
         });
         
-        if (todosLosBounds.length) {
-            // Le damos un pequeño margen (padding) y evitamos que haga zoom excesivo
-            map.fitBounds(L.latLngBounds(todosLosBounds), { padding: [30, 30], maxZoom: 18 });
+// 🛡️ Filtro Inteligente de Coordenadas para el Auto-Zoom
+        if (todosLosBounds.length > 0) {
+            let limitesValidos = L.latLngBounds();
+            let referencia = null;
+            let puntosValidos = 0;
+
+            todosLosBounds.forEach(punto => {
+                // Validar que el punto sea real y no sea el centro del océano (0,0)
+                if (!punto || isNaN(punto.lat) || isNaN(punto.lng) || (punto.lat === 0 && punto.lng === 0)) return;
+
+                if (!referencia) {
+                    referencia = punto; // Usamos el primer poste válido como "Ancla"
+                    limitesValidos.extend(punto);
+                    puntosValidos++;
+                } else {
+                    // Ignorar para el zoom cualquier punto a más de ~500km de distancia del ancla
+                    if (Math.abs(punto.lat - referencia.lat) < 5 && Math.abs(punto.lng - referencia.lng) < 5) {
+                        limitesValidos.extend(punto);
+                        puntosValidos++;
+                    }
+                }
+            });
+
+            // Hacer el zoom solo con los puntos limpios
+            if (puntosValidos > 0) {
+                // maxZoom: 17 evita que la cámara se estrelle contra el suelo si el KMZ tiene muy poquitos puntos
+                map.fitBounds(limitesValidos, { padding: [30, 30], maxZoom: 17 });
+            }
         }
         renderizarPanelCapas();
     }
