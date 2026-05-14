@@ -359,40 +359,47 @@
         .replace(/"/g, '&quot;'); // Evita que se rompan los atributos HTML
     }
 
-    function toggleNivel(elemento, r, s, ss) {
-        // Detectamos si recibimos un input HTML (clic) o un booleano (botón de "Ver Todas")
+    function toggleNivel(elemento) {
+        // 1. Detectar si la orden viene de un clic (elemento) o del botón "Todas" (booleano)
         const visible = typeof elemento === 'boolean' ? elemento : elemento.checked;
     
-        // 1. Mostrar/Ocultar capas en Leaflet
-        Object.entries(carpetasData).forEach(([kr, nv2]) => {
-            if (r !== undefined && kr !== r) return;
-            Object.entries(nv2).forEach(([ks, nv3]) => {
-                if (s !== undefined && ks !== s) return;
-                Object.entries(nv3).forEach(([kss, data]) => {
-                    if (ss !== undefined && kss !== ss) return;
-                    if (visible) map.addLayer(data.layerGroup);
-                    else map.removeLayer(data.layerGroup);
-                });
-            });
-        });
-    
-        // 2. Propagar el estado visual a los checkboxes hijos
+        // 2. Efecto Cascada: Si damos clic en una carpeta (Nivel 1 o 2), marcamos/desmarcamos sus hijos
         if (typeof elemento !== 'boolean') {
             const contenedorPadre = elemento.closest('.n1-header, .n2-header');
             if (contenedorPadre) {
                 const subcarpetas = contenedorPadre.nextElementSibling;
                 if (subcarpetas && subcarpetas.classList.contains('subcarpetas')) {
-                    subcarpetas.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                        cb.checked = visible;
-                    });
+                    subcarpetas.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = visible);
                 }
             }
         }
+    
+        // 3. Sincronización Real: Leemos el DOM y actualizamos el mapa (Evita desincronización)
+        document.querySelectorAll('.n3-item').forEach(item => {
+            const cb = item.querySelector('input[type="checkbox"]');
+            if (!cb) return;
+            
+            // Obtenemos los nombres exactos guardados en memoria, sin importar símbolos raros
+            const dataR = item.dataset.r;
+            const dataS = item.dataset.s;
+            const dataSS = item.dataset.ss;
+            
+            // Buscamos la capa en memoria
+            const capa = carpetasData[dataR] && carpetasData[dataR][dataS] && carpetasData[dataR][dataS][dataSS];
+            
+            if (capa) {
+                if (cb.checked) {
+                    map.addLayer(capa.layerGroup);
+                } else {
+                    map.removeLayer(capa.layerGroup);
+                }
+            }
+        });
     }
 
     function toggleTodasCapas(visible) {
-        toggleNivel(visible);
         document.querySelectorAll('#capas-lista input[type="checkbox"]').forEach(cb => cb.checked = visible);
+        toggleNivel(visible); // Esto fuerza la actualización del mapa
     }
 
     function resaltarCarpeta(r, s, ss) {
@@ -421,48 +428,48 @@
     function renderizarPanelCapas() {
         const lista = document.getElementById('capas-lista');
         lista.innerHTML = '';
-
+    
         Object.entries(carpetasData).forEach(([r, nivel2]) => {
             const uid1 = 'u1_' + Math.random().toString(36).slice(2);
             const wrapper1 = document.createElement('div');
-
+    
             wrapper1.innerHTML = `
                 <div class="n1-header" onclick="toggleFolder('${uid1}', event)">
-                    <input type="checkbox" checked onclick="event.stopPropagation()"
-                        onchange="toggleNivel(this.checked, '${esc(r)}')">
+                    <input type="checkbox" checked onclick="event.stopPropagation()" onchange="toggleNivel(this)">
                     <span class="n1-nombre">${r}</span>
                     <span class="carpeta-toggle" id="toggle_${uid1}">▶</span>
                 </div>
                 <div class="subcarpetas" id="${uid1}"></div>`;
             lista.appendChild(wrapper1);
-
+    
             const cont1 = document.getElementById(uid1);
-
+    
             Object.entries(nivel2).forEach(([s, nivel3]) => {
                 const uid2 = 'u2_' + Math.random().toString(36).slice(2);
                 const wrapper2 = document.createElement('div');
-
+    
                 wrapper2.innerHTML = `
                     <div class="n2-header" onclick="toggleFolder('${uid2}', event)">
-                        <input type="checkbox" checked onclick="event.stopPropagation()"
-                            onchange="toggleNivel(this.checked, '${esc(r)}', '${esc(s)}')">
+                        <input type="checkbox" checked onclick="event.stopPropagation()" onchange="toggleNivel(this)">
                         <span class="n2-nombre">${s}</span>
                         <span class="carpeta-toggle" id="toggle_${uid2}">▶</span>
                     </div>
                     <div class="subcarpetas" id="${uid2}"></div>`;
                 cont1.appendChild(wrapper2);
-
+    
                 const cont2 = document.getElementById(uid2);
-
+    
                 Object.entries(nivel3).forEach(([ss, data]) => {
                     const item = document.createElement('div');
                     item.className = 'n3-item';
+                    
+                    // Asignamos las variables de forma nativa para evitar que los caracteres especiales (/, "", -) rompan el HTML
                     item.dataset.r = r;
                     item.dataset.s = s;
                     item.dataset.ss = ss;
+                    
                     item.innerHTML = `
-                        <input type="checkbox" checked
-                            onchange="toggleNivel(this.checked, '${esc(r)}', '${esc(s)}', '${esc(ss)}')">
+                        <input type="checkbox" checked onchange="toggleNivel(this)">
                         <span class="n3-nombre">${ss}</span>
                         <span class="n3-count">${data.count}</span>`;
                     cont2.appendChild(item);
