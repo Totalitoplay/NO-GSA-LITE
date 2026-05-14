@@ -265,19 +265,6 @@
             <div class="card-title">📊 Resumen de impacto por QR</div>
             <div id="statsContent"></div>
         </div>
-
-        <table id="resultTable">
-            <thead>
-                <tr>
-                    <th onclick="ordenarTabla(0)">Estado ↕</th>
-                    <th onclick="ordenarTabla(1)">Cuenta ↕</th>
-                    <th onclick="ordenarTabla(2)">QR ↕</th>
-                    <th>Coordenadas</th>
-                    <th>Mapa</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
     </div>
 </div>
 
@@ -321,18 +308,21 @@
     <div class="modal-content">
         <div class="modal-drag-handle"></div>
         <h3 id="modal-tp-title" style="margin-bottom: 5px; font-size: 16px; color: #1e293b;">Nombre del TP</h3>
-        <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">¿Dónde deseas visualizar este punto?</p>
+        <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">¿Qué deseas hacer con este punto?</p>
         
         <div class="modal-buttons">
             <button id="btn-modal-kmz" class="btn-primary" style="display: flex; justify-content: center; gap: 8px;">
                 <span>🗺️</span> Ver en este mapa (KMZ)
             </button>
-            <a id="btn-modal-gmaps" href="#" target="_blank" class="btn-google" style="display: flex; justify-content: center; gap: 8px;">
+            <a id="btn-modal-gmaps" href="#" target="_blank" class="btn-google" style="display: flex; justify-content: center; align-items: center; gap: 8px;">
                 <span>📍</span> Iniciar ruta en Google Maps
             </a>
+            <button id="btn-modal-copy" class="btn-ghost" style="display: flex; justify-content: center; gap: 8px;">
+                <span>📄</span> Copiar Código
+            </button>
         </div>
         
-        <button class="btn-ghost" onclick="cerrarOpcionesTP()">Cancelar</button>
+        <button class="btn-ghost" style="margin-top: 10px;" onclick="cerrarOpcionesTP()">Cancelar</button>
     </div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -739,26 +729,32 @@ function irACoordenadas(lat, lng, label) {
         } catch (err) { setPinInfo('Error: ' + err.message); }
     }
     // ── Funciones del Modal del TP ──
-    function abrirOpcionesTP(lat, lng, tpLabel) {
-        // Quitamos el foco al teclado por si estaba abierto el buscador
+ function abrirOpcionesTP(lat, lng, tpLabel) {
         document.activeElement.blur(); 
-        
-        // Asignamos el nombre del TP al título
         document.getElementById('modal-tp-title').textContent = tpLabel || 'Ubicación seleccionada';
         
-        // Configuramos la acción del botón KMZ
         const btnKmz = document.getElementById('btn-modal-kmz');
         btnKmz.onclick = () => {
             cerrarOpcionesTP();
             irACoordenadas(lat, lng, tpLabel);
         };
         
-        // Configuramos la acción del botón Google Maps
         const btnGmaps = document.getElementById('btn-modal-gmaps');
-        btnGmaps.href = `https://www.google.com/maps?q=$${lat},${lng}`;
+        // URL universal de Google Maps
+        btnGmaps.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
         btnGmaps.onclick = () => cerrarOpcionesTP();
+
+        // Lógica del botón de copiar
+        const btnCopy = document.getElementById('btn-modal-copy');
+        btnCopy.innerHTML = '<span>📄</span> Copiar Código'; // Restaurar texto por si se usó antes
+        btnCopy.onclick = () => {
+            navigator.clipboard.writeText(tpLabel);
+            btnCopy.innerHTML = '<span>✅</span> ¡Copiado!';
+            setTimeout(() => {
+                cerrarOpcionesTP();
+            }, 800);
+        };
         
-        // Mostramos el modal con animación
         document.getElementById('modal-opciones-tp').classList.add('activo');
     }
 
@@ -767,31 +763,32 @@ function irACoordenadas(lat, lng, label) {
         modal.classList.remove('activo');
     }
     /* ── Overrides app.js ── */
-    function renderizarTabla(datos) {
-            const tbody = document.querySelector('#resultTable tbody');
-            if (!datos.length) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#64748b;">😕 Sin resultados</td></tr>';
-                return;
-            }
-            tbody.innerHTML = datos.map(res => {
-                if (res.encontrado) {
-                    const lat = parseFloat(res.lat), lng = parseFloat(res.lon);
-                    return `<tr>
-                        <td data-label="ESTADO">✅</td>
-                        <td data-label="CUENTA"><b>${res.cuenta}</b></td>
-                        <td data-label="TP"><span class="qr-badge" onclick="copiarQR('${res.qr}', this)" title="Tap para copiar">${res.qr}</span></td>
-                        <td data-label="COORD" style="font-size:11px;color:#64748b;">${res.lat}, ${res.lon}</td>
-                        <td data-label="MAPA">
-                            <button class="btn-primary" style="padding: 8px;" onclick="abrirOpcionesTP(${lat}, ${lng}, '${res.qr}')">🗺️ Ubicación</button>
-                        </td>
-                    </tr>`;
-                } else {
-                    return `<tr class="no-encontrada">
-                        <td>❌</td><td>${res.cuenta}</td><td colspan="3">No encontrada en inventario</td>
-                    </tr>`;
-                }
-            }).join('');
+function renderizarTabla(datos) {
+        const tbody = document.querySelector('#resultTable tbody');
+        if (!datos.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#64748b;">😕 Sin resultados</td></tr>';
+            return;
         }
+        tbody.innerHTML = datos.map(res => {
+            if (res.encontrado) {
+                const lat = parseFloat(res.lat), lng = parseFloat(res.lon);
+                return `<tr>
+                    <td data-label="ESTADO">✅</td>
+                    <td data-label="CUENTA"><b>${res.cuenta}</b></td>
+                    <td data-label="TP">
+                        <span class="qr-badge" onclick="abrirOpcionesTP(${lat}, ${lng}, '${res.qr}')" title="Ver opciones" style="padding: 6px 10px; font-size: 14px;">
+                            ${res.qr} 👆
+                        </span>
+                    </td>
+                    <td data-label="COORD" style="font-size:11px;color:#64748b;">${res.lat}, ${res.lon}</td>
+                </tr>`;
+            } else {
+                return `<tr class="no-encontrada">
+                    <td>❌</td><td>${res.cuenta}</td><td colspan="2">No encontrada en inventario</td>
+                </tr>`;
+            }
+        }).join('');
+    }
 
     function mostrarResumen(conteo) {
         const contenedorStats = document.getElementById('summaryStats');
