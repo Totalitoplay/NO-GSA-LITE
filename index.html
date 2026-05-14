@@ -343,7 +343,7 @@
     }
 
 async function parsearKMZ(buffer) {
-    // 1. Limpiar capas y datos anteriores
+    // 1. Limpiar capas anteriores
     Object.values(carpetasData).forEach(c => {
         Object.values(c.subcarpetas).forEach(s => map.removeLayer(s.layerGroup));
     });
@@ -351,88 +351,118 @@ async function parsearKMZ(buffer) {
 
     const zip = await JSZip.loadAsync(buffer);
     const kmlFile = Object.values(zip.files).find(f => f.name.endsWith('.kml'));
-    if (!kmlFile) { alert('No se encontró KML'); return; }
-    const kmlDoc = new DOMParser().parseFromString(await kmlFile.async('string'), 'text/xml');
+    if (!kmlFile) { alert('No se encontró KML dentro del KMZ'); return; }
+    
+    const kmlText = await kmlFile.async('string');
+    const kmlDoc = new DOMParser().parseFromString(kmlText, 'text/xml');
 
-    // 2. Mapeo de Estilos (Mantenemos tu lógica de estilos que es correcta)
-    const styles = {};
-    kmlDoc.querySelectorAll('Style').forEach(s => {
-        const id = s.getAttribute('id'); if (!id) return;
-        styles['#' + id] = {
-            iconHref: s.querySelector('IconStyle Icon href')?.textContent?.trim(),
-            lineColor: s.querySelector('LineStyle color')?.textContent?.trim(),
-            polyColor: s.querySelector('PolyStyle color')?.textContent?.trim()
-        };
-    });
-    kmlDoc.querySelectorAll('StyleMap').forEach(sm => {
-        const id = sm.getAttribute('id');
-        const pair = [...sm.querySelectorAll('Pair')].find(p => p.querySelector('key')?.textContent === 'normal');
-        const url = pair?.querySelector('styleUrl')?.textContent?.trim();
-        if (id && url) styles['#' + id] = styles[url] || {};
-    });
+    // --- FUNCIONES INTERNAS DE PROCESAMIENTO ---
+    
+    // Convierte "Long,Lat,Alt" de KML a [Lat, Long] de Leaflet
+    function extraerCoords(el) {
+        if (!el?.textContent) return [];
+        return el.textContent.trim().split(/\s+/).map(c => {
+            const p = c.split(',').map(Number);
+            // KML es Longitud, Latitud. Leaflet es Latitud, Longitud.
+            return (p.length < 2 || isNaN(p[0]) || isNaN(p[1])) ? null : [p[1], p[0]];
+        }).filter(Boolean);
+    }
 
-    const todosLosBounds = [];
+    // Crea las capas de Leaflet (Puntos, Líneas, Polígonos)
+    function crearLayerInterno(pm, style) {
+        const name = pm.querySelector(':scope > name')?.textContent?.trim() || '';
+        const desc = pm.querySelector(':scope > description')?.textContent?.trim() || '';
+        const popup = `<b>${name}</b>${desc ? '<br>' + desc : ''}`;
+        const layers = [];
 
-    // Helper para procesar Placemarks y añadirlos a un LayerGroup
-    const procesarPlacemarksEnCarpeta = (folderEl, layerGroup) => {
+        // Puntos
+        pm.querySelectorAll('Point').forEach(point => {
+            const c = extraerCoords(point.querySelector('coordinates'));
+            if (c.length) {
+                const m = L.marker(c[0]); // Marcador simple para asegurar visibilidad
+                m.bindPopup(popup);
+                if (name) m.bindTooltip(name, { direction: 'top' });
+                layers.push(m);
+            }
+        });
+
+        // Líneas
+        pm.querySelectorAll('LineString').forEach(line => {
+            const c = extraerCoords(line.querySelector('coordinates'));
+            if (c.length) {
+                const l = L.polyline(c, { color: '#e74c3c', weight: 3 });
+                l.bindPopup(popup);
+                layers.push(l);
+            }
+        });
+
+        // Polígonos
+        pm.querySelectorAll('Polygon').forEach(poly => {
+            const c = extraerCoords(poly.querySelector('outerBoundaryIs coordinates'));
+            if (c.length) {
+                const l = L.polygon(c, { color: '#3388ff', fillOpacity: 0.4 });
+                l.bindPopup(popup);
+                layers.push(l);
+            }
+        });
+
+        return layers;
+    }
+
+    // Procesa placemarks de una carpeta específica
+    function procesarCarpeta(folderEl, layerGroup, boundsArray) {
         let count = 0;
-        // Solo placemarks DIRECTOS de esta carpeta (evita duplicados si hay subcarpetas)
-        const placemarks = folderEl.querySelectorAll(':scope > Placemark');
-        placemarks.forEach(pm => {
-            const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
-            const layers = crearLayer(pm, style);
+        folderEl.querySelectorAll(':scope > Placemark').forEach(pm => {
+            const layers = crearLayerInterno(pm, {});
             layers.forEach(l => {
                 layerGroup.addLayer(l);
                 count++;
-                // Recolectar bounds para el zoom
-                if (l.getLatLng) todosLosBounds.push(l.getLatLng());
-                else if (l.getBounds) { 
-                    const b = l.getBounds(); 
-                    if (b.isValid()) { todosLosBounds.push(b.getNorthEast(), b.getSouthWest()); }
+                if (l.getLatLng) boundsArray.push(l.getLatLng());
+                else if (l.getBounds) {
+                    const b = l.getBounds();
+                    if (b.isValid()) { boundsArray.push(b.getNorthEast(), b.getSouthWest()); }
                 }
             });
         });
         return count;
-    };
+    }
 
-    // 3. Recorrer Carpetas Raíz (Nivel 1)
+    // --- PROCESAMIENTO DE JERARQUÍA ---
+
+    const todosLosBounds = [];
     const rootFolders = [...kmlDoc.querySelectorAll('Document > Folder, kml > Folder')];
 
-    rootFolders.forEach(rootFolder => {
-        const rootName = rootFolder.querySelector(':scope > name')?.textContent?.trim() || 'Carpeta Principal';
-        carpetasData[rootName] = { subcarpetas: {} };
+    if (rootFolders.length === 0) {
+        // Si no hay carpetas, procesar todo el documento
+        const lg = L.layerGroup().addTo(map);
+        carpetasData['General'] = { subcarpetas: { 'General': { layerGroup: lg, count: 0 } } };
+        carpetasData['General'].subcarpetas['General'].count = procesarCarpeta(kmlDoc, lg, todosLosBounds);
+    } else {
+        rootFolders.forEach(rootFolder => {
+            const rootName = rootFolder.querySelector(':scope > name')?.textContent?.trim() || 'Carpeta';
+            carpetasData[rootName] = { subcarpetas: {} };
 
-        // Buscar subcarpetas (Nivel 2)
-        const subFolders = [...rootFolder.querySelectorAll(':scope > Folder')];
+            const subFolders = [...rootFolder.querySelectorAll(':scope > Folder')];
 
-        if (subFolders.length > 0) {
-            subFolders.forEach(subFolder => {
-                const subName = subFolder.querySelector(':scope > name')?.textContent?.trim() || 'Subcarpeta';
+            if (subFolders.length > 0) {
+                subFolders.forEach(subFolder => {
+                    const subName = subFolder.querySelector(':scope > name')?.textContent?.trim() || 'Subcarpeta';
+                    const lg = L.layerGroup().addTo(map);
+                    const c = procesarCarpeta(subFolder, lg, todosLosBounds);
+                    carpetasData[rootName].subcarpetas[subName] = { layerGroup: lg, count: c };
+                });
+            } else {
                 const lg = L.layerGroup().addTo(map);
-                const totalInSub = procesarPlacemarksEnCarpeta(subFolder, lg);
-                
-                carpetasData[rootName].subcarpetas[subName] = { 
-                    layerGroup: lg, 
-                    count: totalInSub 
-                };
-            });
-            
-            // ¿Hay placemarks sueltos en la raíz?
-            const lgRaiz = L.layerGroup().addTo(map);
-            const totalRaiz = procesarPlacemarksEnCarpeta(rootFolder, lgRaiz);
-            if (totalRaiz > 0) {
-                carpetasData[rootName].subcarpetas['(Elementos sueltos)'] = { layerGroup: lgRaiz, count: totalRaiz };
+                const c = procesarCarpeta(rootFolder, lg, todosLosBounds);
+                carpetasData[rootName].subcarpetas[rootName] = { layerGroup: lg, count: c };
             }
-        } else {
-            // No tiene subcarpetas, tratamos la raíz como única capa
-            const lg = L.layerGroup().addTo(map);
-            const total = procesarPlacemarksEnCarpeta(rootFolder, lg);
-            carpetasData[rootName].subcarpetas[rootName] = { layerGroup: lg, count: total };
-        }
-    });
+        });
+    }
 
-    // 4. Ajustar vista y refrescar UI
-    if (todosLosBounds.length) map.fitBounds(L.latLngBounds(todosLosBounds));
+    // Ajustar mapa y refrescar UI
+    if (todosLosBounds.length) {
+        map.fitBounds(L.latLngBounds(todosLosBounds));
+    }
     renderizarPanelCapas();
 }
     function renderizarPanelCapas() {
