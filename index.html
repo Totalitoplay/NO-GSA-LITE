@@ -680,7 +680,7 @@ function togglePanelCapas() {
         irACoordenadas(lat, lng, lat + ', ' + lng);
     }
 
-    function irACoordenadas(lat, lng, label) {
+function irACoordenadas(lat, lng, label) {
         if (!mapaIniciado) { iniciarMapa(); mapaIniciado = true; }
         switchTab('mapa');
         setTimeout(() => {
@@ -695,7 +695,18 @@ function togglePanelCapas() {
                 })
             }).addTo(map);
             
-            pinActual.bindPopup('<b>' + (label || '') + '</b><br>' + lat + ', ' + lng).openPopup();
+            // --- AQUÍ ESTÁ LA MAGIA DEL POPUP ACTUALIZADO ---
+            const gmapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+            const popupHTML = `
+                <div style="text-align:center;">
+                    <b>${label || ''}</b><br>
+                    <span style="font-size:11px; color:#64748b;">${lat}, ${lng}</span><br>
+                    <a href="${gmapsLink}" target="_blank" style="display:inline-block; margin-top:8px; padding:4px 8px; background:#ea4335; color:white; text-decoration:none; border-radius:4px; font-size:11px; font-weight:bold;">📍 Abrir en Google Maps</a>
+                </div>
+            `;
+            pinActual.bindPopup(popupHTML).openPopup();
+            // ------------------------------------------------
+            
             map.setView([lat, lng], 16);
             setPinInfo('📍 ' + (label || lat + ', ' + lng));
         }, 150);
@@ -712,28 +723,33 @@ function togglePanelCapas() {
     }
     /* ── Overrides app.js ── */
     function renderizarTabla(datos) {
-        const tbody = document.querySelector('#resultTable tbody');
-        if (!datos.length) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#64748b;">😕 Sin resultados</td></tr>';
-            return;
-        }
-        tbody.innerHTML = datos.map(res => {
-            if (res.encontrado) {
-                const lat = parseFloat(res.lat), lng = parseFloat(res.lon);
-                return `<tr>
-                    <td data-label="ESTADO">✅</td>
-                    <td data-label="CUENTA"><b>${res.cuenta}</b></td>
-                    <td data-label="QR"><span class="qr-badge" onclick="copiarQR('${res.qr}', this)" title="Tap para copiar">${res.qr}</span></td>
-                    <td data-label="COORD" style="font-size:11px;color:#64748b;">${res.lat}, ${res.lon}</td>
-                    <td><button class="btn-ver-mapa" onclick="irACoordenadas(${lat},${lng},'${res.qr} · ${res.cuenta}')">🗺 Ver</button></td>
-                </tr>`;
-            } else {
-                return `<tr class="no-encontrada">
-                    <td>❌</td><td>${res.cuenta}</td><td colspan="3">No encontrada en inventario</td>
-                </tr>`;
+            const tbody = document.querySelector('#resultTable tbody');
+            if (!datos.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#64748b;">😕 Sin resultados</td></tr>';
+                return;
             }
-        }).join('');
-    }
+            tbody.innerHTML = datos.map(res => {
+                if (res.encontrado) {
+                    const lat = parseFloat(res.lat), lng = parseFloat(res.lon);
+                    return `<tr>
+                        <td data-label="ESTADO">✅</td>
+                        <td data-label="CUENTA"><b>${res.cuenta}</b></td>
+                        <td data-label="QR"><span class="qr-badge" onclick="copiarQR('${res.qr}', this)" title="Tap para copiar">${res.qr}</span></td>
+                        <td data-label="COORD" style="font-size:11px;color:#64748b;">${res.lat}, ${res.lon}</td>
+                        <td data-label="MAPA">
+                            <div class="acciones-mapa" style="display: flex; gap: 6px;">
+                                <button class="btn-ver-mapa" onclick="irACoordenadas(${lat},${lng},'${res.qr} · ${res.cuenta}')">🗺 Ver</button>
+                                <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="btn-google">📍 G-Maps</a>
+                            </div>
+                        </td>
+                    </tr>`;
+                } else {
+                    return `<tr class="no-encontrada">
+                        <td>❌</td><td>${res.cuenta}</td><td colspan="3">No encontrada en inventario</td>
+                    </tr>`;
+                }
+            }).join('');
+        }
 
     function mostrarResumen(conteo) {
         const contenedorStats = document.getElementById('summaryStats');
