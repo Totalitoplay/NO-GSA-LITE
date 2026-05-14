@@ -340,11 +340,29 @@
     }
 
     /* ── Panel capas ── */
-    function togglePanelCapas() {
+function togglePanelCapas() {
         const panel = document.getElementById('panel-capas');
-        if (panel) panel.classList.toggle('abierto');
+        if (panel) {
+            const estaAbierto = panel.classList.contains('abierto');
+            
+            if (estaAbierto) {
+                // 1. Lo estamos cerrando: Quitamos la clase
+                panel.classList.remove('abierto');
+                
+                // 2. Le quitamos el "foco" al buscador para obligar al teclado a desaparecer
+                const buscador = document.getElementById('buscador-capas');
+                if (buscador) buscador.blur();
+                
+                // 3. Forzamos a la pantalla a volver hasta arriba
+                window.scrollTo(0, 0); 
+                document.body.scrollTop = 0;
+            } else {
+                // Lo estamos abriendo
+                panel.classList.add('abierto');
+            }
+        }
         
-        // Refrescar el tamaño del mapa al abrir/cerrar el panel
+        // Avisarle al mapa que recalculamos el espacio
         if (mapaIniciado && map) {
             setTimeout(() => map.invalidateSize(), 300);
         }
