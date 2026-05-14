@@ -569,6 +569,70 @@
         if (todosLosBounds.length) map.fitBounds(L.latLngBounds(todosLosBounds));
         renderizarPanelCapas();
     }
+    // 5. Inicialización y navegación del Mapa
+    function iniciarMapa() {
+        // Mapa centrado en Ciudad Juárez
+        map = L.map('map').setView([31.740, -106.487], 12); 
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+
+        document.getElementById('kmzSelect').addEventListener('change', function() {
+            if (this.value) cargarKMZDesdeURL(this.value);
+        });
+        
+        document.getElementById('fileInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0]; if (!file) return;
+            setPinInfo('Cargando ' + file.name + '...');
+            await parsearKMZ(await file.arrayBuffer());
+            setPinInfo(file.name + ' ✓');
+        });
+        
+        document.getElementById('btn-ir').addEventListener('click', irManual);
+        ['latInput','lngInput'].forEach(id => {
+            document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') irManual(); });
+        });
+    }
+
+    function setPinInfo(txt) { 
+        document.getElementById('mapa-pin-info').textContent = txt; 
+    }
+
+    function irManual() {
+        const lat = parseFloat(document.getElementById('latInput').value);
+        const lng = parseFloat(document.getElementById('lngInput').value);
+        if (isNaN(lat) || isNaN(lng)) { setPinInfo('Coords inválidas'); return; }
+        irACoordenadas(lat, lng, lat + ', ' + lng);
+    }
+
+    function irACoordenadas(lat, lng, label) {
+        if (!mapaIniciado) { iniciarMapa(); mapaIniciado = true; }
+        switchTab('mapa');
+        setTimeout(() => {
+            map.invalidateSize();
+            if (pinActual) map.removeLayer(pinActual);
+            
+            pinActual = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div style="background:#ea580c;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4)"></div>',
+                    iconAnchor: [8, 8]
+                })
+            }).addTo(map);
+            
+            pinActual.bindPopup('<b>' + (label || '') + '</b><br>' + lat + ', ' + lng).openPopup();
+            map.setView([lat, lng], 16);
+            setPinInfo('📍 ' + (label || lat + ', ' + lng));
+        }, 150);
+    }
+
+    async function cargarKMZDesdeURL(filename) {
+        setPinInfo('Cargando ' + filename + '...');
+        try {
+            const r = await fetch(BASE_URL + filename);
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            await parsearKMZ(await r.arrayBuffer());
+            setPinInfo(filename + ' ✓');
+        } catch (err) { setPinInfo('Error: ' + err.message); }
+    }
     /* ── Overrides app.js ── */
     function renderizarTabla(datos) {
         const tbody = document.querySelector('#resultTable tbody');
