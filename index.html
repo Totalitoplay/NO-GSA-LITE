@@ -7,48 +7,162 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
     <style>
-        /* Estilos originales preservados */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        #topbar { background: #1e293b; color: white; padding: 0 20px; display: flex; align-items: center; gap: 16px; height: 52px; flex-shrink: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #topbar {
+            background: #1e293b;
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            height: 52px;
+            flex-shrink: 0;
+        }
         #topbar h1 { font-size: 15px; font-weight: 700; color: white; white-space: nowrap; }
         #inventarioStatus { font-size: 12px; color: #94a3b8; }
         #tabs { display: flex; gap: 4px; margin-left: auto; }
-        .tab-btn { padding: 6px 20px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: #94a3b8; font-family: inherit; width: auto; transition: all 0.15s; }
+        .tab-btn {
+            padding: 6px 20px; border-radius: 6px; border: none;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            background: transparent; color: #94a3b8;
+            font-family: inherit; width: auto; transition: all 0.15s;
+        }
         .tab-btn:hover { background: #334155; color: white; }
         .tab-btn.active { background: #2563eb; color: white; }
+
         #view-lista, #view-mapa { flex: 1; overflow: hidden; display: none; flex-direction: column; }
         #view-lista.active, #view-mapa.active { display: flex; }
 
-        /* Lista */
-        #lista-scroll { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; align-items: center; }
-        .card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; width: 100%; max-width: 860px; box-shadow: 0 1px 3px rgb(0 0 0 / 0.06); }
+        /* ── Lista ── */
+        #lista-scroll {
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 14px; align-items: center;
+        }
+        .card {
+            background: white; border-radius: 12px; border: 1px solid #e2e8f0;
+            padding: 20px; width: 100%; max-width: 860px;
+            box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+        }
         .card-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
         label { display: block; font-weight: 600; font-size: 13px; color: #64748b; margin-bottom: 6px; }
         textarea { width: 100%; height: 90px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 13px; resize: vertical; }
+        textarea:focus { outline: 2px solid #93c5fd; border-color: #2563eb; }
         .btn-primary { background: #2563eb; color: white; border: none; padding: 11px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; width: 100%; transition: background 0.15s; }
+        .btn-primary:hover { background: #1d4ed8; }
         .btn-ghost { background: #f1f5f9; color: #475569; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit; width: 100%; margin-top: 8px; transition: background 0.15s; }
+        .btn-ghost:hover { background: #e2e8f0; }
+
+        #resultCounter { display: none; font-size: 13px; }
+        #summaryStats { display: none; }
+        #statsContent { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
+        .stat-card { background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid #2563eb; cursor: pointer; transition: transform 0.15s, background 0.15s; }
+        .stat-card:hover { transform: scale(1.03); background: #e2e8f0; }
 
         #resultTable { width: 100%; max-width: 860px; border-collapse: separate; border-spacing: 0; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgb(0 0 0 / 0.06); }
-        #resultTable thead th { background: #1e293b; color: #f8fafc; text-align: left; padding: 13px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; }
+        #resultTable thead th { background: #1e293b; color: #f8fafc; text-align: left; padding: 13px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none; }
+        #resultTable thead th:hover { background: #334155; }
         #resultTable tbody td { padding: 11px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        #resultTable tbody tr:last-child td { border-bottom: none; }
+        #resultTable tbody tr:hover { background: #f8faff; }
+        .qr-badge { background: #fff7ed; color: #ea580c; padding: 3px 8px; border-radius: 6px; font-weight: 700; border: 1px solid #ffedd5; cursor: pointer; font-size: 12px; }
+        .btn-ver-mapa { background: #2563eb; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.15s; }
+        .btn-ver-mapa:hover { background: #1d4ed8; }
+        .no-encontrada { background: #fff1f2 !important; color: #be123c; }
 
-        /* Mapa y Panel de Capas */
-        #mapa-toolbar { background: #1e293b; padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
-        #mapa-toolbar select, #mapa-toolbar input { padding: 6px 10px; border-radius: 6px; border: none; font-size: 13px; background: #334155; color: white; font-family: inherit; }
+        /* ── Mapa ── */
+        #mapa-toolbar {
+            background: #1e293b; padding: 10px 20px;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+        }
+        #mapa-toolbar select,
+        #mapa-toolbar input[type="text"] { padding: 6px 10px; border-radius: 6px; border: none; font-size: 13px; background: #334155; color: white; font-family: inherit; }
+        #mapa-toolbar input[type="text"]::placeholder { color: #94a3b8; }
+        #mapa-toolbar input[type="text"] { width: 110px; }
+        #btn-ir { background: #ea580c; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+        #btn-ir:hover { background: #c2410c; }
+        #btn-capas { background: #0f6e56; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+        #btn-capas:hover { background: #085041; }
+        #mapa-pin-info { font-size: 12px; color: #94a3b8; }
+
+        /* ── Mapa contenedor ── */
         #mapa-body { flex: 1; display: flex; overflow: hidden; position: relative; }
         #map { flex: 1; }
-        #panel-capas { width: 280px; background: white; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.25s ease; position: absolute; right: 0; top: 0; bottom: 0; z-index: 1000; box-shadow: -4px 0 12px rgb(0 0 0 / 0.1); }
-        #panel-capas.abierto { transform: translateX(0); }
-        #capas-header { background: #1e293b; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-        #capas-lista { flex: 1; overflow-y: auto; padding: 8px 0; }
-        
-        .carpeta-root-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
-        .subcarpetas { padding-left: 20px; display: none; }
-        .subcarpetas.visible { display: block; }
-        .subcarpeta-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-size: 12px; }
 
-        @media (max-width: 600px) { #panel-capas { width: 100%; } }
+        /* ── Panel capas ── */
+        #panel-capas {
+            width: 280px;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            position: absolute;
+            right: 0; top: 0; bottom: 0;
+            z-index: 1000;
+            box-shadow: -4px 0 12px rgb(0 0 0 / 0.1);
+        }
+        #panel-capas.abierto { transform: translateX(0); }
+
+        #capas-header {
+            background: #1e293b; color: white; padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        #capas-header span { font-size: 13px; font-weight: 700; }
+        #btn-cerrar-capas { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0; width: auto; line-height: 1; }
+        #btn-cerrar-capas:hover { color: white; }
+
+        #capas-acciones { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; display: flex; gap: 8px; flex-shrink: 0; }
+        .btn-capas-accion { flex: 1; background: #f1f5f9; color: #475569; border: none; padding: 6px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+        .btn-capas-accion:hover { background: #e2e8f0; }
+
+        #capas-lista { flex: 1; overflow-y: auto; padding: 8px 0; }
+
+        /* Carpeta raíz */
+        .carpeta-root { border-bottom: 1px solid #f1f5f9; }
+        .carpeta-root-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px; cursor: pointer;
+            background: #f8fafc; user-select: none;
+        }
+        .carpeta-root-header:hover { background: #f1f5f9; }
+        .carpeta-nombre-root { font-size: 13px; font-weight: 700; color: #1e293b; flex: 1; }
+        .carpeta-toggle { font-size: 11px; color: #94a3b8; transition: transform 0.2s; }
+        .carpeta-toggle.abierto { transform: rotate(90deg); }
+
+        /* Subcarpetas */
+        .subcarpetas { display: none; padding-left: 0; }
+        .subcarpetas.visible { display: block; }
+
+        .subcarpeta-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px 8px 28px;
+        }
+        .subcarpeta-item:hover { background: #f8faff; }
+        .subcarpeta-item input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #2563eb; flex-shrink: 0; }
+        .subcarpeta-nombre { font-size: 12px; color: #334155; flex: 1; line-height: 1.3; }
+        .subcarpeta-count { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+
+        /* Checkbox de carpeta raíz */
+        .carpeta-root-header input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #2563eb; flex-shrink: 0; }
+
+        @media (max-width: 600px) {
+            #lista-scroll { padding: 12px; }
+            #mapa-toolbar { padding: 8px 12px; gap: 6px; }
+            #mapa-toolbar input[type="text"] { width: 80px; }
+            #panel-capas { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -62,6 +176,7 @@
     </div>
 </div>
 
+<!-- Vista Lista -->
 <div id="view-lista" class="active">
     <div id="lista-scroll">
         <div class="card">
@@ -76,17 +191,33 @@
                     <textarea id="reportInput" placeholder="Pega aquí el reporte..."></textarea>
                 </div>
             </div>
-            <button class="btn-primary" onclick="procesarBusqueda()">🔍 Localizar QRs</button>
+            <button class="btn-primary" onclick="procesarBusqueda()" id="btnBuscar">🔍 Localizar QRs</button>
+            <button class="btn-ghost" onclick="limpiarTodo()">🗑 Limpiar resultados</button>
         </div>
+
+        <div id="resultCounter" class="card" style="padding:12px 16px;"></div>
+
+        <div id="summaryStats" class="card">
+            <div class="card-title">📊 Resumen de impacto por QR</div>
+            <div id="statsContent"></div>
+        </div>
+
         <table id="resultTable">
             <thead>
-                <tr><th>Estado</th><th>Cuenta</th><th>QR</th><th>Coordenadas</th><th>Mapa</th></tr>
+                <tr>
+                    <th onclick="ordenarTabla(0)">Estado ↕</th>
+                    <th onclick="ordenarTabla(1)">Cuenta ↕</th>
+                    <th onclick="ordenarTabla(2)">QR ↕</th>
+                    <th>Coordenadas</th>
+                    <th>Mapa</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
 </div>
 
+<!-- Vista Mapa -->
 <div id="view-mapa">
     <div id="mapa-toolbar">
         <select id="kmzSelect">
@@ -94,10 +225,10 @@
             <option value="ALDAMA_1.kmz">Aldama 1</option>
             <option value="ALDAMA_2.kmz">Aldama 2</option>
         </select>
-        <input type="file" id="fileInput" accept=".kmz" title="Subir KMZ">
+        <input type="file" id="fileInput" accept=".kmz" title="Subir KMZ" style="font-size:11px;color:#94a3b8;width:110px;">
         <input type="text" id="latInput" placeholder="Latitud">
         <input type="text" id="lngInput" placeholder="Longitud">
-        <button id="btn-ir" onclick="irManual()">📍 Ir</button>
+        <button id="btn-ir">📍 Ir</button>
         <button id="btn-capas" onclick="togglePanelCapas()">🗂 Capas</button>
         <span id="mapa-pin-info"></span>
     </div>
@@ -106,7 +237,11 @@
         <div id="panel-capas">
             <div id="capas-header">
                 <span>🗂 Capas del KMZ</span>
-                <button onclick="togglePanelCapas()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:18px;">✕</button>
+                <button id="btn-cerrar-capas" onclick="togglePanelCapas()">✕</button>
+            </div>
+            <div id="capas-acciones">
+                <button class="btn-capas-accion" onclick="toggleTodasCapas(true)">✅ Todas</button>
+                <button class="btn-capas-accion" onclick="toggleTodasCapas(false)">⬜ Ninguna</button>
             </div>
             <div id="capas-lista"></div>
         </div>
@@ -116,18 +251,17 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="app.js?v=100"></script>
-
 <script>
     var mapaIniciado = false;
     var map, pinActual;
-    var carpetasData = {}; // Estructura jerárquica para las capas
+    var carpetasData = {}; // { nombreCarpeta: { layerGroup, subcarpetas: { nombre: layerGroup } } }
     const BASE_URL = 'https://api.allorigins.win/raw?url=https://raw.githubusercontent.com/Totalitoplay/kmz-finder/main/';
 
+    /* ── Tabs ── */
     function switchTab(tab) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.view, #view-lista, #view-mapa').forEach(v => v.classList.remove('active'));
-        const targetBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
-        if(targetBtn) targetBtn.classList.add('active');
+        document.querySelectorAll('#view-lista, #view-mapa').forEach(v => v.classList.remove('active'));
+        document.querySelector('.tab-btn[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
         document.getElementById('view-' + tab).classList.add('active');
         if (tab === 'mapa') {
             if (!mapaIniciado) { iniciarMapa(); mapaIniciado = true; }
@@ -135,12 +269,26 @@
         }
     }
 
-    function togglePanelCapas() { document.getElementById('panel-capas').classList.toggle('abierto'); }
+    /* ── Panel capas ── */
+    function togglePanelCapas() {
+        document.getElementById('panel-capas').classList.toggle('abierto');
+    }
 
+    function toggleTodasCapas(visible) {
+        Object.values(carpetasData).forEach(carpeta => {
+            Object.values(carpeta.subcarpetas).forEach(sub => {
+                if (visible) map.addLayer(sub.layerGroup);
+                else map.removeLayer(sub.layerGroup);
+            });
+        });
+        document.querySelectorAll('#capas-lista input[type="checkbox"]').forEach(cb => cb.checked = visible);
+    }
+
+    /* ── Mapa ── */
     function iniciarMapa() {
         map = L.map('map').setView([25.68, -100.31], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+
         document.getElementById('kmzSelect').addEventListener('change', function() {
             if (this.value) cargarKMZDesdeURL(this.value);
         });
@@ -148,7 +296,40 @@
             const file = e.target.files[0]; if (!file) return;
             setPinInfo('Cargando ' + file.name + '...');
             await parsearKMZ(await file.arrayBuffer());
+            setPinInfo(file.name + ' ✓');
         });
+        document.getElementById('btn-ir').addEventListener('click', irManual);
+        ['latInput','lngInput'].forEach(id => {
+            document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') irManual(); });
+        });
+    }
+
+    function setPinInfo(txt) { document.getElementById('mapa-pin-info').textContent = txt; }
+
+    function irManual() {
+        const lat = parseFloat(document.getElementById('latInput').value);
+        const lng = parseFloat(document.getElementById('lngInput').value);
+        if (isNaN(lat) || isNaN(lng)) { setPinInfo('Coords inválidas'); return; }
+        irACoordenadas(lat, lng, lat + ', ' + lng);
+    }
+
+    function irACoordenadas(lat, lng, label) {
+        if (!mapaIniciado) { iniciarMapa(); mapaIniciado = true; }
+        switchTab('mapa');
+        setTimeout(() => {
+            map.invalidateSize();
+            if (pinActual) map.removeLayer(pinActual);
+            pinActual = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div style="background:#ea580c;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4)"></div>',
+                    iconAnchor: [8, 8]
+                })
+            }).addTo(map);
+            pinActual.bindPopup('<b>' + (label || '') + '</b><br>' + lat + ', ' + lng).openPopup();
+            map.setView([lat, lng], 16);
+            setPinInfo('📍 ' + (label || lat + ', ' + lng));
+        }, 150);
     }
 
     async function cargarKMZDesdeURL(filename) {
@@ -161,132 +342,211 @@
         } catch (err) { setPinInfo('Error: ' + err.message); }
     }
 
-    async function parsearKMZ(buffer) {
-        // Limpiar capas previas
-        Object.values(carpetasData).forEach(root => {
-            root.group.removeFrom(map);
-            Object.values(root.subs).forEach(s => s.group.removeFrom(map));
-        });
-        carpetasData = {};
-        document.getElementById('capas-lista').innerHTML = '';
+async function parsearKMZ(buffer) {
+    // 1. Limpiar capas y datos anteriores
+    Object.values(carpetasData).forEach(c => {
+        Object.values(c.subcarpetas).forEach(s => map.removeLayer(s.layerGroup));
+    });
+    carpetasData = {};
 
-        const zip = await JSZip.loadAsync(buffer);
-        const kmlFile = Object.values(zip.files).find(f => f.name.endsWith('.kml'));
-        const kmlDoc = new DOMParser().parseFromString(await kmlFile.async('string'), 'text/xml');
+    const zip = await JSZip.loadAsync(buffer);
+    const kmlFile = Object.values(zip.files).find(f => f.name.endsWith('.kml'));
+    if (!kmlFile) { alert('No se encontró KML'); return; }
+    const kmlDoc = new DOMParser().parseFromString(await kmlFile.async('string'), 'text/xml');
 
-        // Estilos
-        const styles = extraerEstilos(kmlDoc);
+    // 2. Mapeo de Estilos (Mantenemos tu lógica de estilos que es correcta)
+    const styles = {};
+    kmlDoc.querySelectorAll('Style').forEach(s => {
+        const id = s.getAttribute('id'); if (!id) return;
+        styles['#' + id] = {
+            iconHref: s.querySelector('IconStyle Icon href')?.textContent?.trim(),
+            lineColor: s.querySelector('LineStyle color')?.textContent?.trim(),
+            polyColor: s.querySelector('PolyStyle color')?.textContent?.trim()
+        };
+    });
+    kmlDoc.querySelectorAll('StyleMap').forEach(sm => {
+        const id = sm.getAttribute('id');
+        const pair = [...sm.querySelectorAll('Pair')].find(p => p.querySelector('key')?.textContent === 'normal');
+        const url = pair?.querySelector('styleUrl')?.textContent?.trim();
+        if (id && url) styles['#' + id] = styles[url] || {};
+    });
 
-        // Procesar Carpetas
-        const folders = kmlDoc.querySelectorAll('Folder');
-        folders.forEach(folder => {
-            const name = folder.querySelector('name')?.textContent || "Carpeta";
-            const parentFolder = folder.parentElement.tagName === 'Folder' ? folder.parentElement : null;
-            
-            const group = L.layerGroup().addTo(map);
-            const placemarks = folder.querySelectorAll(':scope > Placemark');
-            
-            placemarks.forEach(pm => {
-                const layers = crearLayersDesdePlacemark(pm, styles);
-                layers.forEach(l => group.addLayer(l));
+    const todosLosBounds = [];
+
+    // Helper para procesar Placemarks y añadirlos a un LayerGroup
+    const procesarPlacemarksEnCarpeta = (folderEl, layerGroup) => {
+        let count = 0;
+        // Solo placemarks DIRECTOS de esta carpeta (evita duplicados si hay subcarpetas)
+        const placemarks = folderEl.querySelectorAll(':scope > Placemark');
+        placemarks.forEach(pm => {
+            const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
+            const layers = crearLayer(pm, style);
+            layers.forEach(l => {
+                layerGroup.addLayer(l);
+                count++;
+                // Recolectar bounds para el zoom
+                if (l.getLatLng) todosLosBounds.push(l.getLatLng());
+                else if (l.getBounds) { 
+                    const b = l.getBounds(); 
+                    if (b.isValid()) { todosLosBounds.push(b.getNorthEast(), b.getSouthWest()); }
+                }
             });
+        });
+        return count;
+    };
 
-            if (!parentFolder) {
-                // Carpeta Raíz
-                carpetasData[name] = { group, subs: {} };
-            } else {
-                // Subcarpeta
-                const parentName = parentFolder.querySelector('name')?.textContent || "Raíz";
-                if (!carpetasData[parentName]) carpetasData[parentName] = { group: L.layerGroup().addTo(map), subs: {} };
-                carpetasData[parentName].subs[name] = { group };
+    // 3. Recorrer Carpetas Raíz (Nivel 1)
+    const rootFolders = [...kmlDoc.querySelectorAll('Document > Folder, kml > Folder')];
+
+    rootFolders.forEach(rootFolder => {
+        const rootName = rootFolder.querySelector(':scope > name')?.textContent?.trim() || 'Carpeta Principal';
+        carpetasData[rootName] = { subcarpetas: {} };
+
+        // Buscar subcarpetas (Nivel 2)
+        const subFolders = [...rootFolder.querySelectorAll(':scope > Folder')];
+
+        if (subFolders.length > 0) {
+            subFolders.forEach(subFolder => {
+                const subName = subFolder.querySelector(':scope > name')?.textContent?.trim() || 'Subcarpeta';
+                const lg = L.layerGroup().addTo(map);
+                const totalInSub = procesarPlacemarksEnCarpeta(subFolder, lg);
+                
+                carpetasData[rootName].subcarpetas[subName] = { 
+                    layerGroup: lg, 
+                    count: totalInSub 
+                };
+            });
+            
+            // ¿Hay placemarks sueltos en la raíz?
+            const lgRaiz = L.layerGroup().addTo(map);
+            const totalRaiz = procesarPlacemarksEnCarpeta(rootFolder, lgRaiz);
+            if (totalRaiz > 0) {
+                carpetasData[rootName].subcarpetas['(Elementos sueltos)'] = { layerGroup: lgRaiz, count: totalRaiz };
             }
-        });
-
-        renderizarUIListaCapas();
-        if (Object.keys(carpetasData).length > 0) {
-            const firstGroup = Object.values(carpetasData)[0].group;
-            // fitBounds opcional aquí
+        } else {
+            // No tiene subcarpetas, tratamos la raíz como única capa
+            const lg = L.layerGroup().addTo(map);
+            const total = procesarPlacemarksEnCarpeta(rootFolder, lg);
+            carpetasData[rootName].subcarpetas[rootName] = { layerGroup: lg, count: total };
         }
-    }
+    });
 
-    function crearLayersDesdePlacemark(pm, styles) {
-        const styleUrl = pm.querySelector('styleUrl')?.textContent?.trim();
-        const style = styles[styleUrl] || {};
-        const name = pm.querySelector('name')?.textContent || '';
-        const coordsStr = pm.querySelector('coordinates')?.textContent || '';
-        const pts = coordsStr.trim().split(/\s+/).map(c => {
-            const p = c.split(',').map(Number);
-            return [p[1], p[0]];
-        });
-
-        const results = [];
-        if (pm.querySelector('Point') && pts[0]) {
-            results.push(L.marker(pts[0]).bindPopup(name));
-        } else if (pm.querySelector('LineString')) {
-            results.push(L.polyline(pts, { color: 'red' }).bindPopup(name));
-        } else if (pm.querySelector('Polygon')) {
-            results.push(L.polygon(pts, { color: 'blue' }).bindPopup(name));
-        }
-        return results;
-    }
-
-    function extraerEstilos(doc) {
-        const s = {};
-        doc.querySelectorAll('Style').forEach(node => {
-            const id = node.getAttribute('id');
-            if (id) s['#' + id] = { color: node.querySelector('LineStyle color')?.textContent };
-        });
-        return s;
-    }
-
-    function renderizarUIListaCapas() {
+    // 4. Ajustar vista y refrescar UI
+    if (todosLosBounds.length) map.fitBounds(L.latLngBounds(todosLosBounds));
+    renderizarPanelCapas();
+}
+    function renderizarPanelCapas() {
         const lista = document.getElementById('capas-lista');
-        Object.entries(carpetasData).forEach(([name, data]) => {
-            const id = 'f_' + Math.random().toString(36).substr(2, 5);
-            const div = document.createElement('div');
-            div.innerHTML = `
-                <div class="carpeta-root-header" onclick="document.getElementById('${id}').classList.toggle('visible')">
-                    <input type="checkbox" checked onclick="event.stopPropagation(); toggleRoot('${name}', this.checked)">
-                    <span class="carpeta-nombre-root">${name}</span>
-                </div>
-                <div class="subcarpetas" id="${id}"></div>
-            `;
-            const subContainer = div.querySelector('.subcarpetas');
-            Object.entries(data.subs).forEach(([subName, subData]) => {
-                const subDiv = document.createElement('div');
-                subDiv.className = 'subcarpeta-item';
-                subDiv.innerHTML = `
-                    <input type="checkbox" checked onchange="toggleSub('${name}', '${subName}', this.checked)">
-                    <span>${subName}</span>
-                `;
-                subContainer.appendChild(subDiv);
-            });
-            lista.appendChild(div);
+        lista.innerHTML = '';
+
+        Object.entries(carpetasData).forEach(([rootName, data]) => {
+            const subEntries = Object.entries(data.subcarpetas);
+            const solamente1 = subEntries.length === 1 && subEntries[0][0] === rootName;
+
+            const rootDiv = document.createElement('div');
+            rootDiv.className = 'carpeta-root';
+
+            if (solamente1) {
+                // Sin subcarpetas: checkbox simple
+                const [subName, subData] = subEntries[0];
+                rootDiv.innerHTML = `
+                    <div class="carpeta-root-header">
+                        <input type="checkbox" checked onchange="toggleSubcarpeta('${rootName}','${subName}', this.checked)">
+                        <span class="carpeta-nombre-root">${rootName}</span>
+                        <span class="subcarpeta-count">${subData.count}</span>
+                    </div>`;
+            } else {
+                // Con subcarpetas: expandible
+                const todosChecked = subEntries.every(([,s]) => map.hasLayer(s.layerGroup));
+                const uid = 'folder_' + Math.random().toString(36).slice(2);
+                rootDiv.innerHTML = `
+                    <div class="carpeta-root-header" onclick="toggleFolder('${uid}', event)">
+                        <input type="checkbox" ${todosChecked ? 'checked' : ''} onclick="event.stopPropagation()" onchange="toggleCarpetaRoot('${rootName}', this.checked)">
+                        <span class="carpeta-nombre-root">${rootName}</span>
+                        <span class="carpeta-toggle" id="toggle_${uid}">▶</span>
+                    </div>
+                    <div class="subcarpetas" id="${uid}">
+                        ${subEntries.map(([subName, subData]) => `
+                        <div class="subcarpeta-item">
+                            <input type="checkbox" checked
+                                onchange="toggleSubcarpeta('${rootName.replace(/'/g,"\\'")}','${subName.replace(/'/g,"\\'")}', this.checked)">
+                            <span class="subcarpeta-nombre">${subName}</span>
+                            <span class="subcarpeta-count">${subData.count}</span>
+                        </div>`).join('')}
+                    </div>`;
+            }
+
+            lista.appendChild(rootDiv);
         });
     }
 
-    function toggleRoot(name, visible) {
-        const root = carpetasData[name];
-        if (visible) map.addLayer(root.group); else map.removeLayer(root.group);
-        Object.values(root.subs).forEach(s => {
-            if (visible) map.addLayer(s.group); else map.removeLayer(s.group);
+    function toggleFolder(uid, event) {
+        const sub = document.getElementById(uid);
+        const toggle = document.getElementById('toggle_' + uid);
+        sub.classList.toggle('visible');
+        toggle.classList.toggle('abierto');
+    }
+
+    function toggleSubcarpeta(rootName, subName, visible) {
+        const sub = carpetasData[rootName]?.subcarpetas[subName];
+        if (!sub) return;
+        if (visible) map.addLayer(sub.layerGroup);
+        else map.removeLayer(sub.layerGroup);
+    }
+
+    function toggleCarpetaRoot(rootName, visible) {
+        const carpeta = carpetasData[rootName];
+        if (!carpeta) return;
+        Object.values(carpeta.subcarpetas).forEach(sub => {
+            if (visible) map.addLayer(sub.layerGroup);
+            else map.removeLayer(sub.layerGroup);
         });
+        // Sincronizar checkboxes de subcarpetas
+        renderizarPanelCapas();
     }
 
-    function toggleSub(rootName, subName, visible) {
-        const sub = carpetasData[rootName].subs[subName];
-        if (visible) map.addLayer(sub.group); else map.removeLayer(sub.group);
+    /* ── Overrides app.js ── */
+    function renderizarTabla(datos) {
+        const tbody = document.querySelector('#resultTable tbody');
+        if (!datos.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#64748b;">😕 Sin resultados</td></tr>';
+            return;
+        }
+        tbody.innerHTML = datos.map(res => {
+            if (res.encontrado) {
+                const lat = parseFloat(res.lat), lng = parseFloat(res.lon);
+                return `<tr>
+                    <td data-label="ESTADO">✅</td>
+                    <td data-label="CUENTA"><b>${res.cuenta}</b></td>
+                    <td data-label="QR"><span class="qr-badge" onclick="copiarQR('${res.qr}', this)" title="Tap para copiar">${res.qr}</span></td>
+                    <td data-label="COORD" style="font-size:11px;color:#64748b;">${res.lat}, ${res.lon}</td>
+                    <td><button class="btn-ver-mapa" onclick="irACoordenadas(${lat},${lng},'${res.qr} · ${res.cuenta}')">🗺 Ver</button></td>
+                </tr>`;
+            } else {
+                return `<tr class="no-encontrada">
+                    <td>❌</td><td>${res.cuenta}</td><td colspan="3">No encontrada en inventario</td>
+                </tr>`;
+            }
+        }).join('');
     }
 
-    function setPinInfo(t) { document.getElementById('mapa-pin-info').innerText = t; }
-    function irManual() { /* Lógica de ir a lat/lng */ }
-    function irACoordenadas(la, ln, label) {
-        switchTab('mapa');
-        setTimeout(() => {
-            if (pinActual) map.removeLayer(pinActual);
-            pinActual = L.marker([la, ln]).addTo(map).bindPopup(label).openPopup();
-            map.setView([la, ln], 16);
-        }, 200);
+    function mostrarResumen(conteo) {
+        const contenedorStats = document.getElementById('summaryStats');
+        const contenido = document.getElementById('statsContent');
+        const ordenados = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+        if (!ordenados.length) { contenedorStats.style.display = 'none'; return; }
+        contenedorStats.style.display = 'block';
+        contenido.innerHTML = ordenados.map(([qr, total]) => {
+            const dato = resultadosActuales.find(r => r.qr === qr && r.encontrado);
+            const lat = dato ? parseFloat(dato.lat) : null;
+            const lng = dato ? parseFloat(dato.lon) : null;
+            const click = lat ? `irACoordenadas(${lat},${lng},'${qr}')` : '';
+            return `<div class="stat-card" onclick="${click}">
+                <span style="font-size:10px;font-weight:700;color:#2563eb;display:block;margin-bottom:4px;">🗺 VER MAPA</span>
+                <span style="font-size:12px;font-weight:700;color:#1e293b;display:block;border-bottom:1px dashed #cbd5e1;padding-bottom:4px;margin-bottom:4px;">${qr}</span>
+                <div style="font-size:20px;font-weight:700;color:#1e293b;">${total} <small style="font-size:10px;color:#64748b;">ctes</small></div>
+            </div>`;
+        }).join('');
     }
 </script>
 </body>
