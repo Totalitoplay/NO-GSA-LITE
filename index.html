@@ -346,9 +346,18 @@
         if (toggle) toggle.classList.toggle('abierto');
     }
 
-    function esc(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+    function esc(s) { 
+    return String(s)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;'); // Evita que se rompan los atributos HTML
+    }
 
-    function toggleNivel(visible, r, s, ss) {
+    function toggleNivel(elemento, r, s, ss) {
+        // Detectamos si recibimos un input HTML (clic) o un booleano (botón de "Ver Todas")
+        const visible = typeof elemento === 'boolean' ? elemento : elemento.checked;
+    
+        // 1. Mostrar/Ocultar capas en Leaflet
         Object.entries(carpetasData).forEach(([kr, nv2]) => {
             if (r !== undefined && kr !== r) return;
             Object.entries(nv2).forEach(([ks, nv3]) => {
@@ -360,6 +369,19 @@
                 });
             });
         });
+    
+        // 2. Propagar el estado visual a los checkboxes hijos
+        if (typeof elemento !== 'boolean') {
+            const contenedorPadre = elemento.closest('.n1-header, .n2-header');
+            if (contenedorPadre) {
+                const subcarpetas = contenedorPadre.nextElementSibling;
+                if (subcarpetas && subcarpetas.classList.contains('subcarpetas')) {
+                    subcarpetas.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        cb.checked = visible;
+                    });
+                }
+            }
+        }
     }
 
     function toggleTodasCapas(visible) {
