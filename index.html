@@ -19,6 +19,7 @@
             overflow: hidden;
         }
 
+        /* ── Topbar ── */
         #topbar {
             background: #1e293b;
             color: white;
@@ -41,7 +42,10 @@
         .tab-btn:hover { background: #334155; color: white; }
         .tab-btn.active { background: #2563eb; color: white; }
 
-        #view-lista, #view-mapa { flex: 1; overflow: hidden; display: none; flex-direction: column; }
+        /* ── Vistas ── */
+        #view-lista, #view-mapa {
+            flex: 1; overflow: hidden; display: none; flex-direction: column;
+        }
         #view-lista.active, #view-mapa.active { display: flex; }
 
         /* ── Lista ── */
@@ -54,29 +58,66 @@
             padding: 20px; width: 100%; max-width: 860px;
             box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
         }
-        .card-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+        .card-title {
+            font-size: 12px; font-weight: 700; color: #64748b;
+            text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px;
+        }
         label { display: block; font-weight: 600; font-size: 13px; color: #64748b; margin-bottom: 6px; }
-        textarea { width: 100%; height: 90px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 13px; resize: vertical; }
+        textarea {
+            width: 100%; height: 90px; padding: 10px 12px;
+            border: 1px solid #cbd5e1; border-radius: 8px;
+            font-family: inherit; font-size: 13px; resize: vertical;
+        }
         textarea:focus { outline: 2px solid #93c5fd; border-color: #2563eb; }
-        .btn-primary { background: #2563eb; color: white; border: none; padding: 11px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; font-family: inherit; width: 100%; transition: background 0.15s; }
+        .btn-primary {
+            background: #2563eb; color: white; border: none; padding: 11px 20px;
+            border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px;
+            font-family: inherit; width: 100%; transition: background 0.15s;
+        }
         .btn-primary:hover { background: #1d4ed8; }
-        .btn-ghost { background: #f1f5f9; color: #475569; border: none; padding: 9px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit; width: 100%; margin-top: 8px; transition: background 0.15s; }
+        .btn-ghost {
+            background: #f1f5f9; color: #475569; border: none; padding: 9px 20px;
+            border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px;
+            font-family: inherit; width: 100%; margin-top: 8px; transition: background 0.15s;
+        }
         .btn-ghost:hover { background: #e2e8f0; }
 
         #resultCounter { display: none; font-size: 13px; }
         #summaryStats { display: none; }
-        #statsContent { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
-        .stat-card { background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid #2563eb; cursor: pointer; transition: transform 0.15s, background 0.15s; }
+        #statsContent {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px; margin-top: 10px;
+        }
+        .stat-card {
+            background: #f1f5f9; padding: 12px; border-radius: 8px;
+            border-left: 4px solid #2563eb; cursor: pointer;
+            transition: transform 0.15s, background 0.15s;
+        }
         .stat-card:hover { transform: scale(1.03); background: #e2e8f0; }
 
-        #resultTable { width: 100%; max-width: 860px; border-collapse: separate; border-spacing: 0; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgb(0 0 0 / 0.06); }
-        #resultTable thead th { background: #1e293b; color: #f8fafc; text-align: left; padding: 13px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none; }
+        #resultTable {
+            width: 100%; max-width: 860px; border-collapse: separate; border-spacing: 0;
+            background: white; border-radius: 12px; overflow: hidden;
+            border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+        }
+        #resultTable thead th {
+            background: #1e293b; color: #f8fafc; text-align: left;
+            padding: 13px 16px; font-size: 12px; text-transform: uppercase;
+            letter-spacing: 0.05em; cursor: pointer; user-select: none;
+        }
         #resultTable thead th:hover { background: #334155; }
         #resultTable tbody td { padding: 11px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
         #resultTable tbody tr:last-child td { border-bottom: none; }
         #resultTable tbody tr:hover { background: #f8faff; }
-        .qr-badge { background: #fff7ed; color: #ea580c; padding: 3px 8px; border-radius: 6px; font-weight: 700; border: 1px solid #ffedd5; cursor: pointer; font-size: 12px; }
-        .btn-ver-mapa { background: #2563eb; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.15s; }
+        .qr-badge {
+            background: #fff7ed; color: #ea580c; padding: 3px 8px; border-radius: 6px;
+            font-weight: 700; border: 1px solid #ffedd5; cursor: pointer; font-size: 12px;
+        }
+        .btn-ver-mapa {
+            background: #2563eb; color: white; border: none; padding: 5px 12px;
+            border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+            font-family: inherit; white-space: nowrap; transition: background 0.15s;
+        }
         .btn-ver-mapa:hover { background: #1d4ed8; }
         .no-encontrada { background: #fff1f2 !important; color: #be123c; }
 
@@ -86,31 +127,34 @@
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
         }
         #mapa-toolbar select,
-        #mapa-toolbar input[type="text"] { padding: 6px 10px; border-radius: 6px; border: none; font-size: 13px; background: #334155; color: white; font-family: inherit; }
+        #mapa-toolbar input[type="text"] {
+            padding: 6px 10px; border-radius: 6px; border: none;
+            font-size: 13px; background: #334155; color: white; font-family: inherit;
+        }
         #mapa-toolbar input[type="text"]::placeholder { color: #94a3b8; }
         #mapa-toolbar input[type="text"] { width: 110px; }
-        #btn-ir { background: #ea580c; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+        #btn-ir {
+            background: #ea580c; color: white; border: none; padding: 6px 14px;
+            border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+        }
         #btn-ir:hover { background: #c2410c; }
-        #btn-capas { background: #0f6e56; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+        #btn-capas {
+            background: #0f6e56; color: white; border: none; padding: 6px 14px;
+            border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: inherit; white-space: nowrap;
+        }
         #btn-capas:hover { background: #085041; }
         #mapa-pin-info { font-size: 12px; color: #94a3b8; }
 
-        /* ── Mapa contenedor ── */
         #mapa-body { flex: 1; display: flex; overflow: hidden; position: relative; }
         #map { flex: 1; }
 
         /* ── Panel capas ── */
         #panel-capas {
-            width: 280px;
-            background: white;
-            border-left: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.25s ease;
-            position: absolute;
-            right: 0; top: 0; bottom: 0;
-            z-index: 1000;
+            width: 300px; background: white; border-left: 1px solid #e2e8f0;
+            display: flex; flex-direction: column;
+            transform: translateX(100%); transition: transform 0.25s ease;
+            position: absolute; right: 0; top: 0; bottom: 0; z-index: 1000;
             box-shadow: -4px 0 12px rgb(0 0 0 / 0.1);
         }
         #panel-capas.abierto { transform: translateX(0); }
@@ -120,42 +164,61 @@
             display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
         }
         #capas-header span { font-size: 13px; font-weight: 700; }
-        #btn-cerrar-capas { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0; width: auto; line-height: 1; }
+        #btn-cerrar-capas {
+            background: none; border: none; color: #94a3b8; cursor: pointer;
+            font-size: 18px; padding: 0; width: auto; line-height: 1;
+        }
         #btn-cerrar-capas:hover { color: white; }
 
-        #capas-acciones { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; display: flex; gap: 8px; flex-shrink: 0; }
-        .btn-capas-accion { flex: 1; background: #f1f5f9; color: #475569; border: none; padding: 6px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+        #capas-acciones {
+            padding: 10px 14px; border-bottom: 1px solid #f1f5f9;
+            display: flex; gap: 8px; flex-shrink: 0;
+        }
+        .btn-capas-accion {
+            flex: 1; background: #f1f5f9; color: #475569; border: none;
+            padding: 6px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: background 0.15s;
+        }
         .btn-capas-accion:hover { background: #e2e8f0; }
 
-        #capas-lista { flex: 1; overflow-y: auto; padding: 8px 0; }
+        #capas-lista { flex: 1; overflow-y: auto; }
 
-        /* Carpeta raíz */
-        .carpeta-root { border-bottom: 1px solid #f1f5f9; }
-        .carpeta-root-header {
+        /* Nivel 1 */
+        .n1-header {
             display: flex; align-items: center; gap: 8px;
-            padding: 10px 14px; cursor: pointer;
-            background: #f8fafc; user-select: none;
+            padding: 10px 14px; cursor: pointer; background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0; user-select: none;
         }
-        .carpeta-root-header:hover { background: #f1f5f9; }
-        .carpeta-nombre-root { font-size: 13px; font-weight: 700; color: #1e293b; flex: 1; }
-        .carpeta-toggle { font-size: 11px; color: #94a3b8; transition: transform 0.2s; }
+        .n1-header:hover { background: #e2e8f0; }
+        .n1-nombre { font-size: 13px; font-weight: 700; color: #1e293b; flex: 1; }
+
+        /* Nivel 2 */
+        .n2-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px 8px 26px; cursor: pointer; background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9; user-select: none;
+        }
+        .n2-header:hover { background: #f1f5f9; }
+        .n2-nombre { font-size: 12px; font-weight: 600; color: #334155; flex: 1; }
+
+        /* Nivel 3 */
+        .n3-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 14px 7px 40px; border-bottom: 1px solid #f8fafc;
+            transition: background 0.15s;
+        }
+        .n3-item:hover { background: #f8faff; }
+        .n3-item.resaltado { background: #dbeafe !important; }
+        .n3-nombre { font-size: 12px; color: #475569; flex: 1; line-height: 1.3; }
+        .n3-count { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+
+        .carpeta-toggle { font-size: 10px; color: #94a3b8; transition: transform 0.2s; flex-shrink: 0; }
         .carpeta-toggle.abierto { transform: rotate(90deg); }
 
-        /* Subcarpetas */
-        .subcarpetas { display: none; padding-left: 0; }
+        .subcarpetas { display: none; }
         .subcarpetas.visible { display: block; }
 
-        .subcarpeta-item {
-            display: flex; align-items: center; gap: 8px;
-            padding: 8px 14px 8px 28px;
-        }
-        .subcarpeta-item:hover { background: #f8faff; }
-        .subcarpeta-item input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #2563eb; flex-shrink: 0; }
-        .subcarpeta-nombre { font-size: 12px; color: #334155; flex: 1; line-height: 1.3; }
-        .subcarpeta-count { font-size: 11px; color: #94a3b8; white-space: nowrap; }
-
-        /* Checkbox de carpeta raíz */
-        .carpeta-root-header input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #2563eb; flex-shrink: 0; }
+        input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: #2563eb; flex-shrink: 0; }
 
         @media (max-width: 600px) {
             #lista-scroll { padding: 12px; }
@@ -254,7 +317,7 @@
 <script>
     var mapaIniciado = false;
     var map, pinActual;
-    var carpetasData = {}; // { nombreCarpeta: { layerGroup, subcarpetas: { nombre: layerGroup } } }
+    var carpetasData = {}; // { r: { s: { ss: { layerGroup, count } } } }
     const BASE_URL = '/kmz/';
 
     /* ── Tabs ── */
@@ -270,23 +333,113 @@
     }
 
     /* ── Panel capas ── */
+    function togglePanelCapas() {
+        document.getElementById('panel-capas').classList.toggle('abierto');
+        setTimeout(() => map.invalidateSize(), 300);
+    }
+
+    function toggleFolder(uid, event) {
+        if (event) event.stopPropagation();
+        const sub = document.getElementById(uid);
+        const toggle = document.getElementById('toggle_' + uid);
+        if (sub) sub.classList.toggle('visible');
+        if (toggle) toggle.classList.toggle('abierto');
+    }
+
+    function esc(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+    function toggleNivel(visible, r, s, ss) {
+        Object.entries(carpetasData).forEach(([kr, nv2]) => {
+            if (r !== undefined && kr !== r) return;
+            Object.entries(nv2).forEach(([ks, nv3]) => {
+                if (s !== undefined && ks !== s) return;
+                Object.entries(nv3).forEach(([kss, data]) => {
+                    if (ss !== undefined && kss !== ss) return;
+                    if (visible) map.addLayer(data.layerGroup);
+                    else map.removeLayer(data.layerGroup);
+                });
+            });
+        });
+    }
+
     function toggleTodasCapas(visible) {
-    toggleNivel(visible);
+        toggleNivel(visible);
         document.querySelectorAll('#capas-lista input[type="checkbox"]').forEach(cb => cb.checked = visible);
     }
-    
+
     function resaltarCarpeta(r, s, ss) {
         document.getElementById('panel-capas').classList.add('abierto');
-    
-        // Quitar resaltados anteriores
-        document.querySelectorAll('#capas-lista .subcarpeta-item').forEach(el => el.style.background = '');
-    
-        // Resaltar el item
-        document.querySelectorAll('#capas-lista .subcarpeta-item').forEach(item => {
+        setTimeout(() => map.invalidateSize(), 300);
+
+        // Quitar resaltados
+        document.querySelectorAll('.n3-item').forEach(el => el.classList.remove('resaltado'));
+
+        // Encontrar y resaltar
+        document.querySelectorAll('.n3-item').forEach(item => {
             if (item.dataset.r === r && item.dataset.s === s && item.dataset.ss === ss) {
-                item.style.background = '#dbeafe';
+                item.classList.add('resaltado');
                 item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Expandir padres si están cerrados
+                const uid2 = item.closest('.subcarpetas')?.id;
+                const uid1 = item.closest('.subcarpetas')?.closest('.subcarpetas')?.id;
+                if (uid2) { document.getElementById(uid2)?.classList.add('visible'); document.getElementById('toggle_' + uid2)?.classList.add('abierto'); }
+                if (uid1) { document.getElementById(uid1)?.classList.add('visible'); document.getElementById('toggle_' + uid1)?.classList.add('abierto'); }
             }
+        });
+    }
+
+    /* ── Renderizar panel 3 niveles ── */
+    function renderizarPanelCapas() {
+        const lista = document.getElementById('capas-lista');
+        lista.innerHTML = '';
+
+        Object.entries(carpetasData).forEach(([r, nivel2]) => {
+            const uid1 = 'u1_' + Math.random().toString(36).slice(2);
+            const wrapper1 = document.createElement('div');
+
+            wrapper1.innerHTML = `
+                <div class="n1-header" onclick="toggleFolder('${uid1}', event)">
+                    <input type="checkbox" checked onclick="event.stopPropagation()"
+                        onchange="toggleNivel(this.checked, '${esc(r)}')">
+                    <span class="n1-nombre">${r}</span>
+                    <span class="carpeta-toggle" id="toggle_${uid1}">▶</span>
+                </div>
+                <div class="subcarpetas" id="${uid1}"></div>`;
+            lista.appendChild(wrapper1);
+
+            const cont1 = document.getElementById(uid1);
+
+            Object.entries(nivel2).forEach(([s, nivel3]) => {
+                const uid2 = 'u2_' + Math.random().toString(36).slice(2);
+                const wrapper2 = document.createElement('div');
+
+                wrapper2.innerHTML = `
+                    <div class="n2-header" onclick="toggleFolder('${uid2}', event)">
+                        <input type="checkbox" checked onclick="event.stopPropagation()"
+                            onchange="toggleNivel(this.checked, '${esc(r)}', '${esc(s)}')">
+                        <span class="n2-nombre">${s}</span>
+                        <span class="carpeta-toggle" id="toggle_${uid2}">▶</span>
+                    </div>
+                    <div class="subcarpetas" id="${uid2}"></div>`;
+                cont1.appendChild(wrapper2);
+
+                const cont2 = document.getElementById(uid2);
+
+                Object.entries(nivel3).forEach(([ss, data]) => {
+                    const item = document.createElement('div');
+                    item.className = 'n3-item';
+                    item.dataset.r = r;
+                    item.dataset.s = s;
+                    item.dataset.ss = ss;
+                    item.innerHTML = `
+                        <input type="checkbox" checked
+                            onchange="toggleNivel(this.checked, '${esc(r)}', '${esc(s)}', '${esc(ss)}')">
+                        <span class="n3-nombre">${ss}</span>
+                        <span class="n3-count">${data.count}</span>`;
+                    cont2.appendChild(item);
+                });
+            });
         });
     }
 
@@ -348,211 +501,126 @@
         } catch (err) { setPinInfo('Error: ' + err.message); }
     }
 
-        async function parsearKMZ(buffer) {
-            // Limpiar
-            Object.values(carpetasData).forEach(sub1 =>
-                Object.values(sub1).forEach(sub2 =>
-                    Object.values(sub2).forEach(lg => map.removeLayer(lg.layerGroup))
-                )
-            );
-            carpetasData = {};
-        
-            const zip = await JSZip.loadAsync(buffer);
-            const kmlFile = Object.values(zip.files).find(f => f.name.endsWith('.kml'));
-            if (!kmlFile) { alert('No se encontró KML'); return; }
-            const kmlDoc = new DOMParser().parseFromString(await kmlFile.async('string'), 'text/xml');
-        
-            const styles = {};
-            kmlDoc.querySelectorAll('Style').forEach(s => {
-                const id = s.getAttribute('id'); if (!id) return;
-                styles['#' + id] = {
-                    iconHref: s.querySelector('IconStyle Icon href')?.textContent?.trim(),
-                    lineColor: s.querySelector('LineStyle color')?.textContent?.trim(),
-                    polyColor: s.querySelector('PolyStyle color')?.textContent?.trim()
-                };
-            });
-            kmlDoc.querySelectorAll('StyleMap').forEach(sm => {
-                const id = sm.getAttribute('id');
-                const pair = [...sm.querySelectorAll('Pair')].find(p => p.querySelector('key')?.textContent === 'normal');
-                const url = pair?.querySelector('styleUrl')?.textContent?.trim();
-                if (id && url) styles['#' + id] = styles[url] || {};
-            });
-        
-            function hex(c) { return (!c || c.length < 8) ? null : '#' + c.slice(6,8) + c.slice(4,6) + c.slice(2,4); }
-            function coords(el) {
-                if (!el?.textContent) return [];
-                return el.textContent.trim().split(/\s+/).map(c => {
-                    const p = c.split(',').map(Number);
-                    return (p.length < 2 || isNaN(p[0]) || isNaN(p[1])) ? null : [p[1], p[0]];
-                }).filter(Boolean);
-            }
-        
-            function crearLayers(pm, style, r, s, ss) {
-                const name = pm.querySelector(':scope > name')?.textContent?.trim() || '';
-                const desc = pm.querySelector(':scope > description')?.textContent?.trim() || '';
-                const popup = '<b>' + name + '</b>' + (desc ? '<br>' + desc : '');
-                const layers = [];
-        
-                function onClick(l) {
-                    l.on('click', () => resaltarCarpeta(r, s, ss));
-                }
-        
-                pm.querySelectorAll('Polygon').forEach(poly => {
-                    const c = coords(poly.querySelector('outerBoundaryIs coordinates'));
-                    if (!c.length) return;
-                    const color = hex(style.polyColor) || hex(style.lineColor) || '#3388ff';
-                    const l = L.polygon(c, { color, fillColor: color, fillOpacity: 0.4 });
-                    l.bindPopup(popup); if (name) l.bindTooltip(name, { sticky: true });
-                    onClick(l); layers.push(l);
-                });
-                pm.querySelectorAll('LineString').forEach(line => {
-                    const c = coords(line.querySelector('coordinates'));
-                    if (!c.length) return;
-                    const l = L.polyline(c, { color: hex(style.lineColor) || '#e74c3c', weight: 3 });
-                    l.bindPopup(popup); if (name) l.bindTooltip(name, { sticky: true });
-                    onClick(l); layers.push(l);
-                });
-                pm.querySelectorAll('Point').forEach(point => {
-                    const c = coords(point.querySelector('coordinates'));
-                    if (!c.length) return;
-                    const m = style.iconHref
-                        ? L.marker(c[0], { icon: L.icon({ iconUrl: style.iconHref, iconSize: [32,32], iconAnchor: [16,32], popupAnchor: [0,-32] }) })
-                        : L.marker(c[0]);
-                    m.bindPopup(popup); if (name) m.bindTooltip(name, { permanent: false, direction: 'top' });
-                    onClick(m); layers.push(m);
-                });
-                return layers;
-            }
-        
-            function getLG(r, s, ss) {
-                if (!carpetasData[r]) carpetasData[r] = {};
-                if (!carpetasData[r][s]) carpetasData[r][s] = {};
-                if (!carpetasData[r][s][ss]) {
-                    carpetasData[r][s][ss] = { layerGroup: L.layerGroup().addTo(map), count: 0 };
-                }
-                return carpetasData[r][s][ss];
-            }
-        
-            const todosLosBounds = [];
-        
-            // Nivel 1
-            kmlDoc.querySelectorAll('Document > Folder, kml > Folder').forEach(f1 => {
-                const r = f1.querySelector(':scope > name')?.textContent?.trim() || 'Raíz';
-        
-                // Nivel 2
-                [...f1.querySelectorAll(':scope > Folder')].forEach(f2 => {
-                    const s = f2.querySelector(':scope > name')?.textContent?.trim() || 'Sub';
-        
-                    // Nivel 3
-                    [...f2.querySelectorAll(':scope > Folder')].forEach(f3 => {
-                        const ss = f3.querySelector(':scope > name')?.textContent?.trim() || 'Sub-sub';
-                        const lg = getLG(r, s, ss);
-                        f3.querySelectorAll(':scope > Placemark').forEach(pm => {
-                            const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
-                            crearLayers(pm, style, r, s, ss).forEach(l => {
-                                lg.layerGroup.addLayer(l); lg.count++;
-                                if (l.getLatLng) todosLosBounds.push(l.getLatLng());
-                                else if (l.getBounds) { const b = l.getBounds(); todosLosBounds.push(b.getNorthEast(), b.getSouthWest()); }
-                            });
-                        });
-                    });
-        
-                    // Placemarks directos en nivel 2
-                    [...f2.querySelectorAll(':scope > Placemark')].forEach(pm => {
-                        const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
-                        const lg = getLG(r, s, '—');
-                        crearLayers(pm, style, r, s, '—').forEach(l => { lg.layerGroup.addLayer(l); lg.count++; });
-                    });
-                });
-        
-                // Placemarks directos en nivel 1
-                [...f1.querySelectorAll(':scope > Placemark')].forEach(pm => {
-                    const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
-                    const lg = getLG(r, '—', '—');
-                    crearLayers(pm, style, r, '—', '—').forEach(l => { lg.layerGroup.addLayer(l); lg.count++; });
-                });
-            });
-        
-            if (todosLosBounds.length) map.fitBounds(L.latLngBounds(todosLosBounds));
-            renderizarPanelCapas();
+    async function parsearKMZ(buffer) {
+        // Limpiar capas anteriores
+        Object.values(carpetasData).forEach(nv2 =>
+            Object.values(nv2).forEach(nv3 =>
+                Object.values(nv3).forEach(d => map.removeLayer(d.layerGroup))
+            )
+        );
+        carpetasData = {};
+
+        const zip = await JSZip.loadAsync(buffer);
+        const kmlFile = Object.values(zip.files).find(f => f.name.endsWith('.kml'));
+        if (!kmlFile) { alert('No se encontró KML'); return; }
+        const kmlDoc = new DOMParser().parseFromString(await kmlFile.async('string'), 'text/xml');
+
+        // Estilos
+        const styles = {};
+        kmlDoc.querySelectorAll('Style').forEach(s => {
+            const id = s.getAttribute('id'); if (!id) return;
+            styles['#' + id] = {
+                iconHref: s.querySelector('IconStyle Icon href')?.textContent?.trim(),
+                lineColor: s.querySelector('LineStyle color')?.textContent?.trim(),
+                polyColor: s.querySelector('PolyStyle color')?.textContent?.trim()
+            };
+        });
+        kmlDoc.querySelectorAll('StyleMap').forEach(sm => {
+            const id = sm.getAttribute('id');
+            const pair = [...sm.querySelectorAll('Pair')].find(p => p.querySelector('key')?.textContent === 'normal');
+            const url = pair?.querySelector('styleUrl')?.textContent?.trim();
+            if (id && url) styles['#' + id] = styles[url] || {};
+        });
+
+        function hex(c) { return (!c || c.length < 8) ? null : '#' + c.slice(6,8) + c.slice(4,6) + c.slice(2,4); }
+        function coords(el) {
+            if (!el?.textContent) return [];
+            return el.textContent.trim().split(/\s+/).map(c => {
+                const p = c.split(',').map(Number);
+                return (p.length < 2 || isNaN(p[0]) || isNaN(p[1])) ? null : [p[1], p[0]];
+            }).filter(Boolean);
         }
 
-    function renderizarPanelCapas() {
-        const lista = document.getElementById('capas-lista');
-        lista.innerHTML = '';
-    
-        Object.entries(carpetasData).forEach(([r, nivel2]) => {
-            const rootDiv = document.createElement('div');
-            rootDiv.className = 'carpeta-root';
-            const uid1 = 'r_' + Math.random().toString(36).slice(2);
-    
-            rootDiv.innerHTML = `
-                <div class="carpeta-root-header" onclick="toggleFolder('${uid1}', event)">
-                    <input type="checkbox" checked onclick="event.stopPropagation()"
-                        onchange="toggleNivel(this.checked, '${esc(r)}')">
-                    <span class="carpeta-nombre-root">${r}</span>
-                    <span class="carpeta-toggle" id="toggle_${uid1}">▶</span>
-                </div>
-                <div class="subcarpetas" id="${uid1}"></div>`;
-    
-            lista.appendChild(rootDiv);
-            const contenedor1 = document.getElementById(uid1);
-    
-            Object.entries(nivel2).forEach(([s, nivel3]) => {
-                const uid2 = 's_' + Math.random().toString(36).slice(2);
-                const sub2div = document.createElement('div');
-                sub2div.style.cssText = 'border-bottom:1px solid #f1f5f9;';
-                sub2div.innerHTML = `
-                    <div class="carpeta-root-header" style="padding-left:24px;background:#f8fafc;"
-                        onclick="toggleFolder('${uid2}', event)">
-                        <input type="checkbox" checked onclick="event.stopPropagation()"
-                            onchange="toggleNivel(this.checked, '${esc(r)}', '${esc(s)}')">
-                        <span class="carpeta-nombre-root" style="font-weight:600;font-size:12px;">${s}</span>
-                        <span class="carpeta-toggle" id="toggle_${uid2}">▶</span>
-                    </div>
-                    <div class="subcarpetas" id="${uid2}"></div>`;
-    
-                contenedor1.appendChild(sub2div);
-                const contenedor2 = document.getElementById(uid2);
-    
-                Object.entries(nivel3).forEach(([ss, data]) => {
-                    const item = document.createElement('div');
-                    item.className = 'subcarpeta-item';
-                    item.dataset.r = r; item.dataset.s = s; item.dataset.ss = ss;
-                    item.style.paddingLeft = '40px';
-                    item.innerHTML = `
-                        <input type="checkbox" checked
-                            onchange="toggleNivel(this.checked, '${esc(r)}', '${esc(s)}', '${esc(ss)}')">
-                        <span class="subcarpeta-nombre">${ss}</span>
-                        <span class="subcarpeta-count">${data.count}</span>`;
-                    contenedor2.appendChild(item);
+        function getLG(r, s, ss) {
+            if (!carpetasData[r]) carpetasData[r] = {};
+            if (!carpetasData[r][s]) carpetasData[r][s] = {};
+            if (!carpetasData[r][s][ss]) carpetasData[r][s][ss] = { layerGroup: L.layerGroup().addTo(map), count: 0 };
+            return carpetasData[r][s][ss];
+        }
+
+        function crearLayers(pm, style, r, s, ss) {
+            const name = pm.querySelector(':scope > name')?.textContent?.trim() || '';
+            const desc = pm.querySelector(':scope > description')?.textContent?.trim() || '';
+            const popup = '<b>' + name + '</b>' + (desc ? '<br>' + desc : '');
+            const layers = [];
+
+            function onClick(l) { l.on('click', () => resaltarCarpeta(r, s, ss)); }
+
+            pm.querySelectorAll('Polygon').forEach(poly => {
+                const c = coords(poly.querySelector('outerBoundaryIs coordinates'));
+                if (!c.length) return;
+                const color = hex(style.polyColor) || hex(style.lineColor) || '#3388ff';
+                const l = L.polygon(c, { color, fillColor: color, fillOpacity: 0.4 });
+                l.bindPopup(popup); if (name) l.bindTooltip(name, { sticky: true });
+                onClick(l); layers.push(l);
+            });
+            pm.querySelectorAll('LineString').forEach(line => {
+                const c = coords(line.querySelector('coordinates'));
+                if (!c.length) return;
+                const l = L.polyline(c, { color: hex(style.lineColor) || '#e74c3c', weight: 3 });
+                l.bindPopup(popup); if (name) l.bindTooltip(name, { sticky: true });
+                onClick(l); layers.push(l);
+            });
+            pm.querySelectorAll('Point').forEach(point => {
+                const c = coords(point.querySelector('coordinates'));
+                if (!c.length) return;
+                const m = style.iconHref
+                    ? L.marker(c[0], { icon: L.icon({ iconUrl: style.iconHref, iconSize: [32,32], iconAnchor: [16,32], popupAnchor: [0,-32] }) })
+                    : L.marker(c[0]);
+                m.bindPopup(popup); if (name) m.bindTooltip(name, { permanent: false, direction: 'top' });
+                onClick(m); layers.push(m);
+            });
+            return layers;
+        }
+
+        const todosLosBounds = [];
+
+        kmlDoc.querySelectorAll('Document > Folder, kml > Folder').forEach(f1 => {
+            const r = f1.querySelector(':scope > name')?.textContent?.trim() || 'Raíz';
+
+            [...f1.querySelectorAll(':scope > Folder')].forEach(f2 => {
+                const s = f2.querySelector(':scope > name')?.textContent?.trim() || 'Sub';
+
+                [...f2.querySelectorAll(':scope > Folder')].forEach(f3 => {
+                    const ss = f3.querySelector(':scope > name')?.textContent?.trim() || 'Sub-sub';
+                    const lg = getLG(r, s, ss);
+                    f3.querySelectorAll(':scope > Placemark').forEach(pm => {
+                        const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
+                        crearLayers(pm, style, r, s, ss).forEach(l => {
+                            lg.layerGroup.addLayer(l); lg.count++;
+                            if (l.getLatLng) todosLosBounds.push(l.getLatLng());
+                            else if (l.getBounds) { const b = l.getBounds(); todosLosBounds.push(b.getNorthEast(), b.getSouthWest()); }
+                        });
+                    });
+                });
+
+                // Placemarks directos en nivel 2
+                [...f2.querySelectorAll(':scope > Placemark')].forEach(pm => {
+                    const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
+                    const lg = getLG(r, s, '—');
+                    crearLayers(pm, style, r, s, '—').forEach(l => { lg.layerGroup.addLayer(l); lg.count++; });
                 });
             });
+
+            // Placemarks directos en nivel 1
+            [...f1.querySelectorAll(':scope > Placemark')].forEach(pm => {
+                const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
+                const lg = getLG(r, '—', '—');
+                crearLayers(pm, style, r, '—', '—').forEach(l => { lg.layerGroup.addLayer(l); lg.count++; });
+            });
         });
-    }
 
-    function toggleFolder(uid, event) {
-        const sub = document.getElementById(uid);
-        const toggle = document.getElementById('toggle_' + uid);
-        sub.classList.toggle('visible');
-        toggle.classList.toggle('abierto');
-    }
-
-    function toggleSubcarpeta(rootName, subName, visible) {
-        const sub = carpetasData[rootName]?.subcarpetas[subName];
-        if (!sub) return;
-        if (visible) map.addLayer(sub.layerGroup);
-        else map.removeLayer(sub.layerGroup);
-    }
-
-    function toggleCarpetaRoot(rootName, visible) {
-        const carpeta = carpetasData[rootName];
-        if (!carpeta) return;
-        Object.values(carpeta.subcarpetas).forEach(sub => {
-            if (visible) map.addLayer(sub.layerGroup);
-            else map.removeLayer(sub.layerGroup);
-        });
-        // Sincronizar checkboxes de subcarpetas
+        if (todosLosBounds.length) map.fitBounds(L.latLngBounds(todosLosBounds));
         renderizarPanelCapas();
     }
 
