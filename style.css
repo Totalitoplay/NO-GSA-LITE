@@ -1,463 +1,251 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>R3 Scripts</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+/* Importar una fuente moderna */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+:root {
+    --primary: #2563eb;    /* Azul moderno */
+    --secondary: #64748b;  /* Gris elegante */
+    --success: #16a34a;    /* Verde suave */
+    --warning: #ea580c;    /* Naranja vibrante */
+    --bg: #f8fafc;
+    --card: #ffffff;
+}
 
-        #topbar {
-            background: #1e293b;
-            color: white;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            height: 52px;
-            flex-shrink: 0;
-        }
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg);
+    color: #1e293b;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
-        #topbar h1 { font-size: 15px; font-weight: 700; color: white; white-space: nowrap; }
+h2 {
+    color: #0f172a;
+    font-weight: 700;
+    margin-bottom: 24px;
+    text-align: center;
+}
 
-        #inventarioStatus { font-size: 12px; color: #94a3b8; }
+/* Contenedores de inputs */
+.config, .input-section {
+    background: var(--card);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+}
 
-        #tabs { display: flex; gap: 4px; margin-left: auto; }
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--secondary);
+}
 
-        .tab-btn {
-            padding: 6px 20px;
-            border-radius: 6px;
-            border: none;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            background: transparent;
-            color: #94a3b8;
-            font-family: inherit;
-            width: auto;
-            transition: all 0.15s;
-        }
-        .tab-btn:hover { background: #334155; color: white; }
-        .tab-btn.active { background: #2563eb; color: white; }
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+}
 
-        #view-lista, #view-mapa { flex: 1; overflow: hidden; display: none; flex-direction: column; }
-        #view-lista.active, #view-mapa.active { display: flex; }
+textarea:focus {
+    outline: 2px solid #93c5fd;
+    border-color: var(--primary);
+}
 
-        /* Lista */
-        #lista-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            align-items: center;
-        }
+button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    font-size: 16px;
+}
 
-        .card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            padding: 20px;
-            width: 100%;
-            max-width: 860px;
-            box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
-        }
+button:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+}
 
-        .card-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 14px;
-        }
+/* Tabla Estilizada */
+#resultTable {
+    width: 100%;
+    max-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--card);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    margin-top: 20px;
+}
 
-        label { display: block; font-weight: 600; font-size: 13px; color: #64748b; margin-bottom: 6px; }
+#resultTable thead th {
+    background-color: #1e293b;
+    color: #f8fafc;
+    text-align: left;
+    padding: 16px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
 
-        textarea {
-            width: 100%;
-            height: 90px;
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 13px;
-            resize: vertical;
-        }
-        textarea:focus { outline: 2px solid #93c5fd; border-color: #2563eb; }
+#resultTable tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
 
-        .btn-primary {
-            background: #2563eb; color: white; border: none;
-            padding: 11px 20px; border-radius: 8px;
-            font-weight: 700; cursor: pointer; font-size: 14px;
-            font-family: inherit; width: 100%; transition: background 0.15s;
-        }
-        .btn-primary:hover { background: #1d4ed8; }
+/* Efecto cebra y hover */
+#resultTable tbody tr:hover {
+    background-color: #f1f7ff;
+}
 
-        .btn-ghost {
-            background: #f1f5f9; color: #475569; border: none;
-            padding: 9px 20px; border-radius: 8px;
-            font-weight: 600; cursor: pointer; font-size: 13px;
-            font-family: inherit; width: 100%; margin-top: 8px; transition: background 0.15s;
-        }
-        .btn-ghost:hover { background: #e2e8f0; }
+/* Botón de Mapa en la tabla */
+.btn-mapa {
+    display: inline-block;
+    background-color: var(--success);
+    color: white;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
 
-        #resultCounter { display: none; font-size: 13px; }
+.btn-mapa:hover {
+    background-color: #15803d;
+}
 
-        #summaryStats { display: none; }
-        #statsContent { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
+/* Badge para el QR */
+.qr-badge {
+    background: #fff7ed;
+    color: var(--warning);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    border: 1px solid #ffedd5;
+}
 
-        .stat-card {
-            background: #f1f5f9; padding: 12px; border-radius: 8px;
-            border-left: 4px solid #2563eb; cursor: pointer;
-            transition: transform 0.15s, background 0.15s;
-        }
-        .stat-card:hover { transform: scale(1.03); background: #e2e8f0; }
+/* Estilo para filas no encontradas */
+.no-encontrada {
+    background-color: #fff1f2 !important;
+    color: #be123c;
+}
 
-        #resultTable {
-            width: 100%; max-width: 860px;
-            border-collapse: separate; border-spacing: 0;
-            background: white; border-radius: 12px; overflow: hidden;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
-        }
-        #resultTable thead th {
-            background: #1e293b; color: #f8fafc;
-            text-align: left; padding: 13px 16px;
-            font-size: 12px; text-transform: uppercase;
-            letter-spacing: 0.05em; cursor: pointer; user-select: none;
-        }
-        #resultTable thead th:hover { background: #334155; }
-        #resultTable tbody td { padding: 11px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        #resultTable tbody tr:last-child td { border-bottom: none; }
-        #resultTable tbody tr:hover { background: #f8faff; }
-
-        .qr-badge {
-            background: #fff7ed; color: #ea580c;
-            padding: 3px 8px; border-radius: 6px;
-            font-weight: 700; border: 1px solid #ffedd5;
-            cursor: pointer; font-size: 12px;
-        }
-
-        .btn-ver-mapa {
-            background: #2563eb; color: white; border: none;
-            padding: 5px 12px; border-radius: 6px;
-            font-size: 12px; font-weight: 600;
-            cursor: pointer; font-family: inherit;
-            white-space: nowrap; transition: background 0.15s;
-        }
-        .btn-ver-mapa:hover { background: #1d4ed8; }
-
-        .no-encontrada { background: #fff1f2 !important; color: #be123c; }
-
-        /* Mapa */
-        #mapa-toolbar {
-            background: #1e293b; padding: 10px 20px;
-            display: flex; align-items: center; gap: 10px;
-            flex-wrap: wrap; flex-shrink: 0;
-        }
-        #mapa-toolbar select,
-        #mapa-toolbar input[type="text"] {
-            padding: 6px 10px; border-radius: 6px; border: none;
-            font-size: 13px; background: #334155; color: white; font-family: inherit;
-        }
-        #mapa-toolbar input[type="text"]::placeholder { color: #94a3b8; }
-        #mapa-toolbar input[type="text"] { width: 110px; }
-
-        #btn-ir {
-            background: #ea580c; color: white; border: none;
-            padding: 6px 14px; border-radius: 6px;
-            font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
-        }
-        #btn-ir:hover { background: #c2410c; }
-
-        #mapa-pin-info { font-size: 12px; color: #94a3b8; }
-
-        #map { flex: 1; }
-
-        @media (max-width: 600px) {
-            #lista-scroll { padding: 12px; }
-            #mapa-toolbar { padding: 8px 12px; gap: 6px; }
-            #mapa-toolbar input[type="text"] { width: 80px; }
-        }
-    </style>
-</head>
-<body>
-
-<div id="topbar">
-    <h1>⚡ R3 Scripts</h1>
-    <span id="inventarioStatus">⏳ Cargando inventario...</span>
-    <div id="tabs">
-        <button class="tab-btn active" onclick="switchTab('lista')">📋 Lista</button>
-        <button class="tab-btn" onclick="switchTab('mapa')">🗺 Mapa</button>
-    </div>
-</div>
-
-<!-- Vista Lista -->
-<div id="view-lista" class="active">
-    <div id="lista-scroll">
-
-        <div class="card">
-            <div class="card-title">Cargar clientes</div>
-            <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px;">
-                <div style="flex:1; min-width:180px;">
-                    <label>Subir CSV</label>
-                    <input type="file" id="clientCsvFile" accept=".csv">
-                </div>
-                <div style="flex:1; min-width:180px;">
-                    <label>Pegar reporte</label>
-                    <textarea id="reportInput" placeholder="Pega aquí el reporte..."></textarea>
-                </div>
-            </div>
-            <button class="btn-primary" onclick="procesarBusqueda()" id="btnBuscar">🔍 Localizar QRs</button>
-            <button class="btn-ghost" onclick="limpiarTodo()">🗑 Limpiar resultados</button>
-        </div>
-
-        <div id="resultCounter" class="card" style="padding:12px 16px;"></div>
-
-        <div id="summaryStats" class="card">
-            <div class="card-title">📊 Resumen de impacto por QR</div>
-            <div id="statsContent"></div>
-        </div>
-
-        <table id="resultTable">
-            <thead>
-                <tr>
-                    <th onclick="ordenarTabla(0)">Estado ↕</th>
-                    <th onclick="ordenarTabla(1)">Cuenta ↕</th>
-                    <th onclick="ordenarTabla(2)">QR ↕</th>
-                    <th>Coordenadas</th>
-                    <th>Mapa</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-    </div>
-</div>
-
-<!-- Vista Mapa -->
-<div id="view-mapa">
-    <div id="mapa-toolbar">
-        <select id="kmzSelect">
-            <option value="">— KMZ —</option>
-            <option value="ALDAMA_1.kmz">Aldama 1</option>
-            <option value="ALDAMA_2.kmz">Aldama 2</option>
-        </select>
-        <input type="file" id="fileInput" accept=".kmz" title="Subir KMZ" style="font-size:11px;color:#94a3b8;width:110px;">
-        <input type="text" id="latInput" placeholder="Latitud">
-        <input type="text" id="lngInput" placeholder="Longitud">
-        <button id="btn-ir">📍 Ir</button>
-        <span id="mapa-pin-info"></span>
-    </div>
-    <div id="map"></div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="app.js?v=100"></script>
-<script>
-    var mapaIniciado = false;
-    var map, kmzLayer, pinActual;
-    const BASE_URL = 'https://api.allorigins.win/raw?url=https://raw.githubusercontent.com/Totalitoplay/kmz-finder/main/';
-
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('#view-lista, #view-mapa').forEach(v => v.classList.remove('active'));
-        document.querySelector('.tab-btn[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
-        document.getElementById('view-' + tab).classList.add('active');
-        if (tab === 'mapa') {
-            if (!mapaIniciado) { iniciarMapa(); mapaIniciado = true; }
-            else setTimeout(() => map.invalidateSize(), 100);
-        }
+@media (max-width: 600px) {
+    body {
+        padding: 10px; /* Menos margen para ganar espacio */
     }
 
-    function iniciarMapa() {
-        map = L.map('map').setView([25.68, -100.31], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-        kmzLayer = L.layerGroup().addTo(map);
-
-        document.getElementById('kmzSelect').addEventListener('change', function() {
-            if (this.value) cargarKMZDesdeURL(this.value);
-        });
-        document.getElementById('fileInput').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            setPinInfo('Cargando ' + file.name + '...');
-            await parsearKMZ(await file.arrayBuffer());
-            setPinInfo(file.name + ' ✓');
-        });
-        document.getElementById('btn-ir').addEventListener('click', irManual);
-        ['latInput','lngInput'].forEach(id => {
-            document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') irManual(); });
-        });
+    .config, .input-section {
+        padding: 15px;
+        width: calc(100% - 30px);
     }
 
-    function setPinInfo(txt) { document.getElementById('mapa-pin-info').textContent = txt; }
-
-    function irManual() {
-        const lat = parseFloat(document.getElementById('latInput').value);
-        const lng = parseFloat(document.getElementById('lngInput').value);
-        if (isNaN(lat) || isNaN(lng)) { setPinInfo('Coords inválidas'); return; }
-        irACoordenadas(lat, lng, lat + ', ' + lng);
+    h2 {
+        font-size: 1.2rem;
     }
 
-    function irACoordenadas(lat, lng, label) {
-        if (!mapaIniciado) { iniciarMapa(); mapaIniciado = true; }
-        switchTab('mapa');
-        setTimeout(() => {
-            map.invalidateSize();
-            if (pinActual) map.removeLayer(pinActual);
-            pinActual = L.marker([lat, lng], {
-                icon: L.divIcon({
-                    className: '',
-                    html: '<div style="background:#ea580c;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.4)"></div>',
-                    iconAnchor: [8, 8]
-                })
-            }).addTo(map);
-            pinActual.bindPopup('<b>' + (label || '') + '</b><br>' + lat + ', ' + lng).openPopup();
-            map.setView([lat, lng], 16);
-            setPinInfo('📍 ' + (label || lat + ', ' + lng));
-        }, 150);
+    /* Convertimos la tabla en "Tarjetas" para que no se desborde */
+    #resultTable thead {
+        display: none; /* Escondemos los encabezados en celular */
     }
 
-    async function cargarKMZDesdeURL(filename) {
-        setPinInfo('Cargando ' + filename + '...');
-        try {
-            const r = await fetch(BASE_URL + filename);
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            await parsearKMZ(await r.arrayBuffer());
-            setPinInfo(filename + ' ✓');
-        } catch (err) { setPinInfo('Error: ' + err.message); }
+    #resultTable, #resultTable tbody, #resultTable tr, #resultTable td {
+        display: block;
+        width: 100%;
     }
 
-    async function parsearKMZ(buffer) {
-        const zip = await JSZip.loadAsync(buffer);
-        const kmlFile = Object.values(zip.files).find(f => f.name.endsWith('.kml'));
-        if (!kmlFile) { alert('No se encontró KML'); return; }
-        const kmlDoc = new DOMParser().parseFromString(await kmlFile.async('string'), 'text/xml');
-
-        const styles = {};
-        kmlDoc.querySelectorAll('Style').forEach(s => {
-            const id = s.getAttribute('id'); if (!id) return;
-            styles['#' + id] = {
-                iconHref: s.querySelector('IconStyle Icon href')?.textContent?.trim(),
-                lineColor: s.querySelector('LineStyle color')?.textContent?.trim(),
-                polyColor: s.querySelector('PolyStyle color')?.textContent?.trim()
-            };
-        });
-        kmlDoc.querySelectorAll('StyleMap').forEach(sm => {
-            const id = sm.getAttribute('id');
-            const pair = [...sm.querySelectorAll('Pair')].find(p => p.querySelector('key')?.textContent === 'normal');
-            const url = pair?.querySelector('styleUrl')?.textContent?.trim();
-            if (id && url) styles['#' + id] = styles[url] || {};
-        });
-
-        function hex(c) { return (!c || c.length < 8) ? null : '#' + c.slice(6,8) + c.slice(4,6) + c.slice(2,4); }
-        function coords(el) {
-            if (!el?.textContent) return [];
-            return el.textContent.trim().split(/\s+/).map(c => {
-                const p = c.split(',').map(Number);
-                return (p.length < 2 || isNaN(p[0]) || isNaN(p[1])) ? null : [p[1], p[0]];
-            }).filter(Boolean);
-        }
-
-        const layers = [];
-        kmlDoc.querySelectorAll('Placemark').forEach(pm => {
-            const name = pm.querySelector('name')?.textContent?.trim() || '';
-            const desc = pm.querySelector('description')?.textContent?.trim() || '';
-            const style = styles[pm.querySelector('styleUrl')?.textContent?.trim()] || {};
-            const popup = '<b>' + name + '</b>' + (desc ? '<br>' + desc : '');
-
-            pm.querySelectorAll('Polygon').forEach(poly => {
-                const c = coords(poly.querySelector('outerBoundaryIs coordinates'));
-                if (!c.length) return;
-                const color = hex(style.polyColor) || hex(style.lineColor) || '#3388ff';
-                const l = L.polygon(c, { color, fillColor: color, fillOpacity: 0.4 });
-                l.bindPopup(popup); if (name) l.bindTooltip(name, { sticky: true }); layers.push(l);
-            });
-            pm.querySelectorAll('LineString').forEach(line => {
-                const c = coords(line.querySelector('coordinates'));
-                if (!c.length) return;
-                const color = hex(style.lineColor) || '#e74c3c';
-                const l = L.polyline(c, { color, weight: 3 });
-                l.bindPopup(popup); if (name) l.bindTooltip(name, { sticky: true }); layers.push(l);
-            });
-            pm.querySelectorAll('Point').forEach(point => {
-                const c = coords(point.querySelector('coordinates'));
-                if (!c.length) return;
-                const m = style.iconHref
-                    ? L.marker(c[0], { icon: L.icon({ iconUrl: style.iconHref, iconSize: [32,32], iconAnchor: [16,32], popupAnchor: [0,-32] }) })
-                    : L.marker(c[0]);
-                m.bindPopup(popup); if (name) m.bindTooltip(name, { permanent: false, direction: 'top' }); layers.push(m);
-            });
-        });
-
-        kmzLayer.clearLayers();
-        if (!layers.length) { alert('Sin geometrías válidas'); return; }
-        layers.forEach(l => kmzLayer.addLayer(l));
-        map.fitBounds(kmzLayer.getBounds());
+    #resultTable tr {
+        margin-bottom: 15px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px;
+        box-sizing: border-box;
+        background: white;
     }
 
-    /* Override renderizarTabla */
-    function renderizarTabla(datos) {
-        const tbody = document.querySelector('#resultTable tbody');
-        if (!datos.length) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#64748b;">😕 Sin resultados</td></tr>';
-            return;
-        }
-        tbody.innerHTML = datos.map(res => {
-            if (res.encontrado) {
-                const lat = parseFloat(res.lat), lng = parseFloat(res.lon);
-                return `<tr>
-                    <td data-label="ESTADO">✅</td>
-                    <td data-label="CUENTA"><b>${res.cuenta}</b></td>
-                    <td data-label="QR"><span class="qr-badge" onclick="copiarQR('${res.qr}', this)" title="Tap para copiar">${res.qr}</span></td>
-                    <td data-label="COORD" style="font-size:11px;color:#64748b;">${res.lat}, ${res.lon}</td>
-                    <td><button class="btn-ver-mapa" onclick="irACoordenadas(${lat}, ${lng}, '${res.qr} · ${res.cuenta}')">🗺 Ver</button></td>
-                </tr>`;
-            } else {
-                return `<tr class="no-encontrada">
-                    <td>❌</td>
-                    <td>${res.cuenta}</td>
-                    <td colspan="3">No encontrada en inventario</td>
-                </tr>`;
-            }
-        }).join('');
+    #resultTable td {
+        text-align: left;
+        padding: 8px 5px;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    /* Override mostrarResumen */
-    function mostrarResumen(conteo) {
-        const contenedorStats = document.getElementById('summaryStats');
-        const contenido = document.getElementById('statsContent');
-        const ordenados = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
-        if (!ordenados.length) { contenedorStats.style.display = 'none'; return; }
-        contenedorStats.style.display = 'block';
-        contenido.innerHTML = ordenados.map(([qr, total]) => {
-            const dato = resultadosActuales.find(r => r.qr === qr && r.encontrado);
-            const lat = dato ? parseFloat(dato.lat) : null;
-            const lng = dato ? parseFloat(dato.lon) : null;
-            const click = lat ? `irACoordenadas(${lat},${lng},'${qr}')` : '';
-            return `<div class="stat-card" onclick="${click}">
-                <span style="font-size:10px;font-weight:700;color:#2563eb;display:block;margin-bottom:4px;">🗺 VER MAPA</span>
-                <span style="font-size:12px;font-weight:700;color:#1e293b;display:block;border-bottom:1px dashed #cbd5e1;padding-bottom:4px;margin-bottom:4px;">${qr}</span>
-                <div style="font-size:20px;font-weight:700;color:#1e293b;">${total} <small style="font-size:10px;color:#64748b;">ctes</small></div>
-            </div>`;
-        }).join('');
+    /* Añadimos etiquetas automáticas para saber qué es cada dato */
+    #resultTable td::before {
+        content: attr(data-label); /* Necesita un ajuste en el JS que te daré abajo */
+        font-weight: bold;
+        color: var(--secondary);
+        font-size: 12px;
     }
-</script>
-</body>
-</html>
+
+    .btn-mapa {
+        width: 100%; /* Botón de mapa a todo lo ancho para el dedo */
+        padding: 12px;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    .qr-badge {
+        font-size: 16px; /* QR más grande para verlo rápido */
+    }
+    #summaryStats {
+    border-top: 4px solid var(--primary);
+}
+
+#statsContent div {
+    transition: transform 0.2s;
+    cursor: default;
+}
+
+#statsContent div:hover {
+    transform: scale(1.05);
+    background-color: #e2e8f0 !important;
+}
+
+/* Botón secundario para limpiar */
+.btn-secondary {
+    background-color: var(--secondary);
+    margin-top: 10px;
+    font-size: 14px;
+    padding: 8px;
+}
+}
+#statsContent a:hover {
+    opacity: 0.8;
+}
+
+#statsContent div:active {
+    transform: scale(0.95); /* Efecto de pulsación en el celular */
+}
+#panel-mapa {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #e2e8f0;
+    background: #1e293b;
+    min-width: 0;          /* ← agrega esto */
+    overflow: hidden;
+}
