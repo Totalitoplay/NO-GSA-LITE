@@ -576,9 +576,8 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
-    <script src="https://unpkg.com/open-location-code@1.0.4/openlocationcode.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.4/openlocationcode.min.js"></script>
     <script src="https://unpkg.com/proj4@2.9.0/dist/proj4.js"></script>
-
     <script>
         /* ==================================================================
            1. CAPAS BASE
@@ -868,13 +867,14 @@
 function procesarEntrada(texto) {
             texto = texto.trim();
 
-            // CASO A: Plus Code (Soporta textos sucios como "HHX8+JR5 Juárez, Chihuahua")
+            // CASO A: Plus Code (Soporta textos mezclados como "HHX8+JR5 Juárez, Chihuahua")
             if (texto.includes('+')) {
                 var matchPlusCode = texto.match(/[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,4}/i);
                 
                 if (matchPlusCode) {
                     var codigoLimpio = matchPlusCode[0].toUpperCase();
                     try {
+                        // Usamos OpenLocationCode con O mayúscula
                         if (OpenLocationCode.isShort(codigoLimpio)) {
                             var centro = map.getCenter();
                             codigoLimpio = OpenLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
@@ -890,7 +890,7 @@ function procesarEntrada(texto) {
                 }
             }
 
-            // CASO B: UTM (zona + banda + este + norte)
+            // CASO B: UTM
             var utm = parseUTM(texto);
             if (utm) return utm;
 
@@ -922,6 +922,7 @@ function procesarEntrada(texto) {
             var plusCode = '-';
             
             try { 
+                // Usamos OpenLocationCode con O mayúscula
                 plusCode = OpenLocationCode.encode(lat, lng); 
             } catch (e) {
                 console.error("No se pudo codificar el Plus Code", e);
