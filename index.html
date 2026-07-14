@@ -835,7 +835,13 @@
         /* ==================================================================
            4. MARCADOR DE BÚSQUEDA
            ================================================================== */
-        var marcadorBusqueda = L.marker([0, 0]).addTo(map);
+            var iconGoogle = L.divIcon({
+                className: 'marker-google-style',
+                html: '<div class="marker-pin"></div><div class="marker-shadow"></div>',
+                iconSize: [32, 40]
+            });
+
+        var marcadorBusqueda = L.marker([0, 0], { icon: iconGoogle }).addTo(map);
         map.removeLayer(marcadorBusqueda);
 
         /* ==================================================================
