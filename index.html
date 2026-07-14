@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Clusters</title>
+    <title>Mapa de Clusters - Red</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
         #mapa { width: 100%; height: 100vh; }
     </style>
 </head>
@@ -18,25 +18,37 @@
     <script src="https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js"></script>
 
     <script>
-        // Inicializar el mapa centrado cerca de las coordenadas del KML
         var map = L.map('mapa').setView([31.735, -106.481], 13);
 
-        // Añadir el mapa base (OpenStreetMap)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Cargar el archivo KML
-        // Nota: Por políticas de CORS en navegadores, esto debe ejecutarse sobre un servidor (local o en la nube)
-        var capaKml = omnivore.kml('CLUSTERS.kml')
+        // Crear una capa personalizada que asigne los colores basándose en las propiedades del KML
+        var capaEstilizada = L.geoJson(null, {
+            style: function(feature) {
+                return {
+                    // Si el KML tiene color de borde, lo usa; si no, negro por defecto.
+                    color: feature.properties.stroke || '#000000', 
+                    // Si el KML tiene color de relleno, lo usa; si no, gris por defecto.
+                    fillColor: feature.properties.fill || '#cccccc', 
+                    // Aplica el grosor y las opacidades originales (KML usa formato ARGB, aquí se traduce a opacidad decimal)
+                    weight: feature.properties['stroke-width'] || 1.5,
+                    opacity: feature.properties['stroke-opacity'] || 1,
+                    fillOpacity: feature.properties['fill-opacity'] || 0.5
+                };
+            }
+        });
+
+        // Cargar el archivo pasándole la capa personalizada con estilos
+        var capaKml = omnivore.kml('CLUSTERS.kml', null, capaEstilizada)
             .on('ready', function() {
-                // Ajustar el zoom automáticamente para que todos los clusters sean visibles
                 map.fitBounds(capaKml.getBounds());
                 
-                // Opcional: Añadir un popup a cada polígono con su nombre
                 capaKml.eachLayer(function(layer) {
                     if (layer.feature && layer.feature.properties) {
+                        // Muestra el nombre del Cluster (ej. "ALDAMA_A") al hacer clic
                         layer.bindPopup("<b>Cluster:</b> " + layer.feature.properties.name);
                     }
                 });
