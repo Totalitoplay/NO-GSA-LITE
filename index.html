@@ -15,9 +15,10 @@
     <div id="mapa"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js"></script>
+    <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
 
     <script>
+        // Inicializar el mapa
         var map = L.map('mapa').setView([31.735, -106.481], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -25,35 +26,26 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Crear una capa personalizada que asigne los colores basándose en las propiedades del KML
-        var capaEstilizada = L.geoJson(null, {
-            style: function(feature) {
-                return {
-                    // Si el KML tiene color de borde, lo usa; si no, negro por defecto.
-                    color: feature.properties.stroke || '#000000', 
-                    // Si el KML tiene color de relleno, lo usa; si no, gris por defecto.
-                    fillColor: feature.properties.fill || '#cccccc', 
-                    // Aplica el grosor y las opacidades originales (KML usa formato ARGB, aquí se traduce a opacidad decimal)
-                    weight: feature.properties['stroke-width'] || 1.5,
-                    opacity: feature.properties['stroke-opacity'] || 1,
-                    fillOpacity: feature.properties['fill-opacity'] || 0.5
-                };
-            }
-        });
-
-        // Cargar el archivo pasándole la capa personalizada con estilos
-        var capaKml = omnivore.kml('CLUSTERS.kml', null, capaEstilizada)
-            .on('ready', function() {
-                map.fitBounds(capaKml.getBounds());
+        // Fetch lee tu archivo KML local directamente
+        fetch('CLUSTERS.kml')
+            .then(res => res.text())
+            .then(kmltext => {
+                // Parsear el texto a formato XML
+                const parser = new DOMParser();
+                const kml = parser.parseFromString(kmltext, 'text/xml');
                 
-                capaKml.eachLayer(function(layer) {
-                    if (layer.feature && layer.feature.properties) {
-                        // Muestra el nombre del Cluster (ej. "ALDAMA_A") al hacer clic
-                        layer.bindPopup("<b>Cluster:</b> " + layer.feature.properties.name);
-                    }
-                });
+                // L.KML procesa el XML e inyecta los colores, bordes y popups originales
+                const capaKml = new L.KML(kml);
+                
+                map.addLayer(capaKml);
+                
+                // Ajustar el encuadre automáticamente para ver toda la mancha de clusters
+                const limites = capaKml.getBounds();
+                if (limites.isValid()) {
+                    map.fitBounds(limites);
+                }
             })
-            .addTo(map);
+            .catch(err => console.error('Error cargando el KML:', err));
     </script>
 </body>
 </html>
