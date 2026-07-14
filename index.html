@@ -576,7 +576,7 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.4/openlocationcode.min.js"></script>
+    <script src="https://unpkg.com/open-location-code@1.0.4/openlocationcode.js"></script>
     <script src="https://unpkg.com/proj4@2.9.0/dist/proj4.js"></script>
 
     <script>
@@ -865,25 +865,23 @@
             } catch (e) { return null; }
         }
 
-        function procesarEntrada(texto) {
+function procesarEntrada(texto) {
             texto = texto.trim();
 
-            // CASO A: Plus Code (Soporta formatos mezclados con texto como "HHX8+JR5 Juárez, Chihuahua")
+            // CASO A: Plus Code (Soporta textos sucios como "HHX8+JR5 Juárez, Chihuahua")
             if (texto.includes('+')) {
-                // Extrae estrictamente el Plus Code, ignorando cualquier palabra alrededor
                 var matchPlusCode = texto.match(/[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,4}/i);
                 
                 if (matchPlusCode) {
                     var codigoLimpio = matchPlusCode[0].toUpperCase();
                     try {
-                        // Ojo aquí: openLocationCode con "o" minúscula
-                        if (openLocationCode.isShort(codigoLimpio)) {
+                        if (OpenLocationCode.isShort(codigoLimpio)) {
                             var centro = map.getCenter();
-                            codigoLimpio = openLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
+                            codigoLimpio = OpenLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
                         }
                         
-                        if (openLocationCode.isValid(codigoLimpio) && openLocationCode.isFull(codigoLimpio)) {
-                            var decodificado = openLocationCode.decode(codigoLimpio);
+                        if (OpenLocationCode.isValid(codigoLimpio) && OpenLocationCode.isFull(codigoLimpio)) {
+                            var decodificado = OpenLocationCode.decode(codigoLimpio);
                             return { lat: decodificado.latitudeCenter, lng: decodificado.longitudeCenter };
                         }
                     } catch (e) {
@@ -892,7 +890,7 @@
                 }
             }
 
-            // CASO B: UTM
+            // CASO B: UTM (zona + banda + este + norte)
             var utm = parseUTM(texto);
             if (utm) return utm;
 
@@ -923,8 +921,12 @@
             var dmsLng = decimalToDMS(lng, false);
             var plusCode = '-';
             
-            // Ojo aquí: openLocationCode con "o" minúscula
-            try { plusCode = openLocationCode.encode(lat, lng); } catch (e) {}
+            try { 
+                plusCode = OpenLocationCode.encode(lat, lng); 
+            } catch (e) {
+                console.error("No se pudo codificar el Plus Code", e);
+            }
+            
             var utmTexto = calcularUTM(lat, lng) || 'No disponible';
 
             document.getElementById('info-decimal').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
