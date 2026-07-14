@@ -441,6 +441,36 @@
             .panel-flotante { width: calc(100vw - 32px); }
             .brand-chip span:not(.dot) { display: none; }
         }
+        /* Estilo del marcador tipo Google Maps */
+.marker-google-style {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 32px !important;
+    height: 40px !important;
+    margin-left: -16px !important;
+    margin-top: -40px !important;
+    pointer-events: none;
+}
+
+.marker-pin {
+    width: 26px;
+    height: 35px;
+    background: #ea4335; /* Color rojo Google */
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2px solid #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.marker-shadow {
+    width: 16px;
+    height: 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 50%;
+    margin-top: -10px;
+    filter: blur(2px);
+}
     </style>
 </head>
 <body>
