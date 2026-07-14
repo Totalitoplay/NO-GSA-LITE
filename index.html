@@ -3,344 +3,580 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Clusters - Premium</title>
-    
+    <title>Visualizador de Clusters · Consulta de Cobertura</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    
+
     <style>
         :root {
-            --primary: #4F46E5; /* Indigo moderno */
-            --primary-hover: #4338CA;
-            --bg-glass: rgba(255, 255, 255, 0.85);
-            --border-glass: rgba(255, 255, 255, 0.4);
-            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
-            --text-main: #1F2937;
-            --text-muted: #6B7280;
+            --accent: #059669;
+            --accent-dark: #047857;
+            --accent-soft: rgba(5, 150, 105, 0.14);
+            --ink: #0f172a;
+            --ink-muted: #64748b;
+            --panel-bg: rgba(255, 255, 255, 0.88);
+            --panel-bg-solid: #ffffff;
+            --panel-border: rgba(15, 23, 42, 0.08);
+            --hairline: rgba(15, 23, 42, 0.09);
+            --shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.22), 0 2px 8px rgba(15, 23, 42, 0.06);
+            --shadow-sm: 0 4px 14px -4px rgba(15, 23, 42, 0.18);
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-base: 13.5px;
+            --danger: #dc2626;
         }
 
-        body, html { 
-            margin: 0; 
-            padding: 0; 
-            height: 100%; 
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f3f4f6;
+            font-size: var(--font-base);
+            background-color: #eef1f4;
             overflow: hidden;
+            color: var(--ink);
         }
 
-        #mapa { 
-            width: 100%; 
-            height: 100vh; 
+        .mono { font-family: 'IBM Plex Mono', monospace; }
+
+        #mapa {
+            width: 100%;
+            height: 100vh;
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             z-index: 1;
         }
 
-        /* Panel Flotante Estilizado (Izquierda) */
-        .panel-dashboard {
+        button { font-family: inherit; }
+
+        /* ============ BARRA SUPERIOR ============ */
+        .topbar {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 16px;
+            left: 16px;
             z-index: 1000;
-            width: 360px;
-            background: var(--bg-glass);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--panel-bg);
             backdrop-filter: blur(16px) saturate(180%);
             -webkit-backdrop-filter: blur(16px) saturate(180%);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            box-sizing: border-box;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .titulo-app {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-main);
-            margin: 0 0 16px 0;
-            letter-spacing: -0.025em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .titulo-app::before {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: var(--primary);
-            border-radius: 50%;
-        }
-
-        /* Buscador */
-        .busqueda-container {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .input-busqueda {
-            flex-grow: 1;
-            padding: 12px 16px;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 12px;
-            font-family: inherit;
-            font-size: 13.5px;
-            color: var(--text-main);
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .input-busqueda:focus {
-            border-color: var(--primary);
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-        }
-
-        .btn-accion {
-            padding: 12px 18px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 13.5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-accion:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        /* Resultados de Conversión */
-        .panel-resultados {
-            display: none;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 14px;
-            padding: 14px;
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .resultado-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .resultado-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .resultado-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .resultado-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .resultado-valor {
-            font-size: 13px;
-            font-family: monospace;
-            color: var(--text-main);
-            font-weight: 500;
-        }
-
-        /* Botón de copiar estético */
-        .btn-copiar {
-            background: transparent;
-            border: none;
-            cursor: pointer;
+            border: 1px solid var(--panel-border);
+            border-radius: 999px;
             padding: 6px;
-            border-radius: 8px;
+            box-shadow: var(--shadow);
+            max-width: calc(100vw - 32px);
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border: none;
+            background: transparent;
+            border-radius: 999px;
+            cursor: pointer;
+            color: var(--ink-muted);
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover { background: rgba(15, 23, 42, 0.06); color: var(--ink); }
+        .icon-btn.activo { background: var(--accent); color: #fff; }
+        .icon-btn svg { width: 18px; height: 18px; }
+
+        .tb-divider {
+            width: 1px;
+            height: 22px;
+            background: var(--hairline);
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        .coord-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            background: rgba(15, 23, 42, 0.04);
+            border-radius: 999px;
+            padding: 8px 14px;
+            cursor: pointer;
+            color: var(--ink);
+            font-size: var(--font-base);
+            transition: all 0.15s ease;
+            min-width: 0;
+        }
+
+        .coord-chip:hover { background: rgba(15, 23, 42, 0.08); }
+        .coord-chip svg { width: 16px; height: 16px; color: var(--ink-muted); flex-shrink: 0; }
+        #chip-coords {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: calc(var(--font-base) - 1px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
+        }
+
+        .brand-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px 8px 8px;
+            color: var(--ink);
+            font-weight: 600;
+            font-size: var(--font-base);
+            white-space: nowrap;
+        }
+        .brand-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+        .font-ctrl { display: flex; gap: 2px; padding-right: 2px; }
+        .font-ctrl button {
+            width: 30px; height: 30px;
+            border: none; background: transparent;
+            border-radius: 999px; cursor: pointer;
+            color: var(--ink-muted); font-weight: 700;
+            font-size: 11px;
+        }
+        .font-ctrl button:hover { background: rgba(15,23,42,0.06); color: var(--ink); }
+
+        /* ============ PANELES DESPLEGABLES ============ */
+        .panel-flotante {
+            position: absolute;
+            z-index: 999;
+            width: 320px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            display: none;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .panel-flotante.show {
+            display: block;
+            animation: slideDown 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #search-panel { top: 66px; left: 16px; }
+        #bookmarks-panel { top: 66px; left: 16px; }
+        #layers-panel { top: 66px; right: 16px; }
+        #legend-panel { top: 66px; right: 16px; }
+
+        .panel-titulo {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 0 0 10px 0;
+        }
+
+        /* Buscador */
+        .busqueda-container { display: flex; gap: 8px; margin-bottom: 12px; }
+        .input-texto {
+            flex-grow: 1;
+            padding: 10px 14px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: calc(var(--font-base) - 0.5px);
+            color: var(--ink);
+            outline: none;
             transition: all 0.2s ease;
-            color: var(--text-muted);
+            min-width: 0;
         }
-
-        .btn-copiar:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--primary);
+        .input-texto:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px var(--accent-soft);
         }
+        .hint-formato {
+            font-size: 10.5px;
+            color: var(--ink-muted);
+            margin: -6px 0 12px 2px;
+            line-height: 1.5;
+        }
+        .btn-accion {
+            padding: 10px 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: calc(var(--font-base) - 0.5px);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .btn-accion:hover { background: var(--accent-dark); transform: translateY(-1px); }
 
-        /* Notificación Temporal de Copiado */
+        .panel-resultados { display: none; }
+        .panel-resultados.visible {
+            display: block;
+            background: rgba(15, 23, 42, 0.03);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            border: 1px solid var(--hairline);
+            animation: slideDown 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .resultado-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
+        .resultado-item:last-child { margin-bottom: 0; }
+        .resultado-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .resultado-label { font-size: 10.5px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .resultado-valor { font-size: 12.5px; font-family: 'IBM Plex Mono', monospace; color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+        .btn-copiar {
+            background: transparent; border: none; cursor: pointer; padding: 6px;
+            border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; color: var(--ink-muted); flex-shrink: 0;
+        }
+        .btn-copiar:hover { background: rgba(0, 0, 0, 0.06); color: var(--accent); }
+        .btn-copiar svg { width: 16px; height: 16px; }
+
+        /* Toast */
         .toast-copiado {
             position: absolute;
-            bottom: 20px;
+            bottom: 56px;
             left: 50%;
-            transform: translateX(-50%) translateY(100px);
+            transform: translateX(-50%) translateY(40px);
             z-index: 2000;
-            background: #1F2937;
+            background: var(--ink);
             color: white;
             padding: 10px 20px;
             border-radius: 30px;
             font-size: 13px;
             font-weight: 500;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             opacity: 0;
+            pointer-events: none;
         }
+        .toast-copiado.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        .toast-copiado.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        /* Selector de Capas Estilizado */
-        .selector-capas {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 16px;
-            background: rgba(0, 0, 0, 0.04);
-            padding: 4px;
-            border-radius: 10px;
-        }
-
-        .capa-opcion {
-            flex: 1;
+        /* Selector de estilos de mapa */
+        .estilo-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+        .estilo-opcion {
+            flex: 1 1 30%;
             text-align: center;
             padding: 8px 4px;
-            font-size: 12px;
+            font-size: 11.5px;
             font-weight: 600;
-            color: var(--text-muted);
+            color: var(--ink-muted);
             cursor: pointer;
-            border-radius: 7px;
-            transition: all 0.2s ease;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--hairline);
+            background: rgba(255,255,255,0.5);
+            transition: all 0.15s ease;
         }
+        .estilo-opcion.activa { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .estilo-opcion:not(.activa):hover { background: rgba(15,23,42,0.05); }
 
-        .capa-opcion.activa {
-            background: #ffffff;
-            color: var(--text-main);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        .layers-panel-section { margin-bottom: 16px; }
+        .layers-panel-section:last-child { margin-bottom: 0; }
+        .switch-fila { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink); margin-bottom: 8px; cursor: pointer; }
+        .opacidad-fila { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--ink-muted); }
+        .opacidad-fila input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+        /* Marcadores guardados */
+        .bookmarks-panel-header { display: flex; gap: 6px; margin-bottom: 12px; }
+        .marcador-fila {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 10px; border-radius: var(--radius-sm);
+            background: rgba(15,23,42,0.03); margin-bottom: 6px;
         }
+        .marcador-nombre {
+            background: none; border: none; text-align: left; flex-grow: 1;
+            font-size: 12.5px; color: var(--ink); cursor: pointer; padding: 0;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .marcador-nombre:hover { color: var(--accent); }
+        .marcador-borrar {
+            background: none; border: none; color: var(--ink-muted); cursor: pointer;
+            font-size: 13px; padding: 2px 6px; border-radius: 6px; flex-shrink: 0;
+        }
+        .marcador-borrar:hover { color: var(--danger); background: rgba(220,38,38,0.08); }
+        .vacio { font-size: 12px; color: var(--ink-muted); text-align: center; padding: 16px 4px; }
 
-        /* Barra de Coordenadas en Vivo (Inferior Derecha) */
-        .coordenadas-live {
+        /* Leyenda */
+        .leyenda-fila {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 4px; cursor: pointer; border-radius: var(--radius-sm);
+        }
+        .leyenda-fila:hover { background: rgba(15,23,42,0.04); }
+        .leyenda-swatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
+        .leyenda-texto { font-size: 12.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .leyenda-conteo { font-size: 11px; color: var(--ink-muted); margin-left: auto; flex-shrink: 0; }
+
+        /* ============ RIEL DE HERRAMIENTAS (DERECHA) ============ */
+        .right-rail {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
+            top: 16px;
+            right: 16px;
             z-index: 1000;
-            background: var(--bg-glass);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 6px;
+            box-shadow: var(--shadow);
+        }
+
+        /* Banner de modo activo (medir / marcar) */
+        .mode-banner {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: var(--ink);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            box-shadow: var(--shadow);
+        }
+        .mode-banner.show { display: flex; }
+        .mode-banner .mono { color: #a7f3d0; font-weight: 600; }
+        .mode-banner button {
+            background: rgba(255,255,255,0.15); border: none; color: #fff;
+            padding: 5px 10px; border-radius: 999px; cursor: pointer; font-size: 11.5px;
+        }
+        .mode-banner button:hover { background: rgba(255,255,255,0.25); }
+
+        /* ============ BARRA DE ESTADO INFERIOR ============ */
+        .statusbar {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 16px;
+            background: var(--panel-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border-glass);
-            border-radius: 30px;
-            padding: 8px 16px;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-main);
-            box-shadow: var(--shadow);
-            display: flex;
-            gap: 12px;
+            border-top: 1px solid var(--panel-border);
+            font-size: 11px;
+            color: var(--ink-muted);
         }
+        #status-left {
+            font-family: 'IBM Plex Mono', monospace;
+            cursor: pointer;
+            color: var(--ink);
+            user-select: none;
+        }
+        #status-left:hover { color: var(--accent); }
+        .status-sep { opacity: 0.5; }
+        .status-mid { display: flex; align-items: center; gap: 10px; font-family: 'IBM Plex Mono', monospace; }
+        .status-right { margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .live-item span {
-            color: var(--text-muted);
-            font-weight: 600;
-            margin-right: 4px;
+        /* Controles nativos de Leaflet */
+        .leaflet-bottom.leaflet-left { bottom: 38px; }
+        .leaflet-control-scale { margin-bottom: 4px !important; }
+        .leaflet-control-scale-line {
+            background: var(--panel-bg) !important;
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--panel-border) !important;
+            color: var(--ink) !important;
+            font-family: 'IBM Plex Mono', monospace;
         }
-
-        /* Quitar marca de agua y acomodar controles nativos */
-        .leaflet-control-attribution {
-            background: rgba(255, 255, 255, 0.5) !important;
-            backdrop-filter: blur(4px);
-        }
-        
-        .leaflet-top.leaflet-right {
-            top: 20px;
-            right: 20px;
-        }
-        
         .leaflet-bar {
             border: none !important;
-            box-shadow: var(--shadow) !important;
-            border-radius: 12px !important;
+            box-shadow: var(--shadow-sm) !important;
+            border-radius: var(--radius-md) !important;
             overflow: hidden;
         }
-
         .leaflet-bar a {
-            background: var(--bg-glass) !important;
+            background: var(--panel-bg) !important;
             backdrop-filter: blur(8px);
-            color: var(--text-main) !important;
-            border-bottom: 1px solid var(--border-glass) !important;
+            color: var(--ink) !important;
+            border-bottom: 1px solid var(--panel-border) !important;
+        }
+        .leaflet-bar a:hover { background: rgba(15,23,42,0.06) !important; }
+
+        /* Popups personalizados */
+        .popup-contenido { font-size: 12px; min-width: 190px; }
+        .popup-fila { margin-bottom: 6px; }
+        .popup-btn-eliminar {
+            width: 100%; margin-top: 4px; padding: 6px 10px;
+            background: rgba(220,38,38,0.08); color: var(--danger);
+            border: none; border-radius: 8px; cursor: pointer; font-size: 11.5px; font-weight: 600;
+        }
+        .popup-btn-eliminar:hover { background: rgba(220,38,38,0.15); }
+
+        @media print {
+            .topbar, .right-rail, .panel-flotante, .mode-banner, .statusbar,
+            .leaflet-control-zoom, .leaflet-control-scale, #toast { display: none !important; }
+            #mapa { position: static; height: 100vh; }
+        }
+
+        @media (max-width: 640px) {
+            #chip-coords { max-width: 110px; }
+            .panel-flotante { width: calc(100vw - 32px); }
+            .brand-chip span:not(.dot) { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <div class="panel-dashboard">
-        <h1 class="titulo-app">Visualizador de Infraestructura</h1>
-        
-        <div class="selector-capas">
-            <div class="capa-opcion activa" onclick="cambiarMapa('limpio')">Limpio</div>
-            <div class="capa-opcion" onclick="cambiarMapa('satelite')">Satélite</div>
-            <div class="capa-opcion" onclick="cambiarMapa('oscuro')">Oscuro</div>
+    <!-- ============ BARRA SUPERIOR ============ -->
+    <div class="topbar">
+        <button class="icon-btn" id="btn-locate" title="Mi ubicación">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+        </button>
+        <div class="tb-divider"></div>
+        <button class="coord-chip" id="btn-toggle-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+            <span id="chip-coords">Buscar coordenadas o Plus Code…</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <div class="tb-divider"></div>
+        <button class="icon-btn" id="btn-bookmarks" title="Marcadores guardados">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"></path></svg>
+        </button>
+        <button class="icon-btn" id="btn-home" title="Vista inicial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><path d="M9 22V12h6v10"></path></svg>
+        </button>
+        <div class="tb-divider"></div>
+        <div class="brand-chip"><span class="dot"></span><span>Visualizador de Clusters</span></div>
+        <div class="tb-divider"></div>
+        <div class="font-ctrl">
+            <button id="font-dec" title="Reducir tamaño de texto">A-</button>
+            <button id="font-inc" title="Aumentar tamaño de texto">A+</button>
         </div>
+    </div>
 
+    <!-- ============ PANEL: BUSCADOR ============ -->
+    <div class="panel-flotante" id="search-panel">
+        <p class="panel-titulo">Buscar ubicación</p>
         <div class="busqueda-container">
-            <input type="text" id="buscador-input" class="input-busqueda" placeholder="Buscar coordenadas o Plus Code...">
+            <input type="text" id="buscador-input" class="input-texto" placeholder="Ej. 31.735, -106.481">
             <button id="btn-buscar" class="btn-accion">Buscar</button>
         </div>
+        <div class="hint-formato">Acepta decimal, DMS (31°44'06.0"N 106°28'51.6"W), Plus Code o UTM (13S 350000 3512000).</div>
 
         <div id="panel-info" class="panel-resultados">
             <div class="resultado-item">
-                <div class="resultado-info">
-                    <span class="resultado-label">Decimal</span>
-                    <span id="info-decimal" class="resultado-valor">-</span>
-                </div>
-                <button class="btn-copiar" onclick="copiarTexto('info-decimal')">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                </button>
+                <div class="resultado-info"><span class="resultado-label">Decimal</span><span id="info-decimal" class="resultado-valor">-</span></div>
+                <button class="btn-copiar" onclick="copiarTexto('info-decimal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
             </div>
             <div class="resultado-item">
-                <div class="resultado-info">
-                    <span class="resultado-label">Grados DMS</span>
-                    <span id="info-dms" class="resultado-valor">-</span>
-                </div>
-                <button class="btn-copiar" onclick="copiarTexto('info-dms')">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                </button>
+                <div class="resultado-info"><span class="resultado-label">Grados DMS</span><span id="info-dms" class="resultado-valor">-</span></div>
+                <button class="btn-copiar" onclick="copiarTexto('info-dms')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
             </div>
             <div class="resultado-item">
-                <div class="resultado-info">
-                    <span class="resultado-label">Plus Code</span>
-                    <span id="info-plus" class="resultado-valor">-</span>
-                </div>
-                <button class="btn-copiar" onclick="copiarTexto('info-plus')">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                </button>
+                <div class="resultado-info"><span class="resultado-label">Plus Code</span><span id="info-plus" class="resultado-valor">-</span></div>
+                <button class="btn-copiar" onclick="copiarTexto('info-plus')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+            </div>
+            <div class="resultado-item">
+                <div class="resultado-info"><span class="resultado-label">UTM</span><span id="info-utm" class="resultado-valor">-</span></div>
+                <button class="btn-copiar" onclick="copiarTexto('info-utm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
             </div>
         </div>
     </div>
 
-    <div class="coordenadas-live">
-        <div class="live-item"><span id="lbl-lat">LAT:</span><span id="live-lat">0.000000</span></div>
-        <div class="live-item"><span id="lbl-lng">LNG:</span><span id="live-lng">0.000000</span></div>
+    <!-- ============ PANEL: MARCADORES GUARDADOS ============ -->
+    <div class="panel-flotante" id="bookmarks-panel">
+        <p class="panel-titulo">Marcadores guardados</p>
+        <div class="bookmarks-panel-header">
+            <input type="text" id="nombre-marcador-input" class="input-texto" placeholder="Nombre de la vista actual…">
+            <button id="btn-agregar-marcador" class="btn-accion">Guardar</button>
+        </div>
+        <div id="lista-marcadores"></div>
+    </div>
+
+    <!-- ============ PANEL: CAPAS ============ -->
+    <div class="panel-flotante" id="layers-panel">
+        <div class="layers-panel-section">
+            <p class="panel-titulo">Estilo de mapa</p>
+            <div class="estilo-lista">
+                <button class="estilo-opcion activa" data-estilo="limpio">Claro</button>
+                <button class="estilo-opcion" data-estilo="satelite">Satélite</button>
+                <button class="estilo-opcion" data-estilo="oscuro">Oscuro</button>
+                <button class="estilo-opcion" data-estilo="topografico">Topográfico</button>
+                <button class="estilo-opcion" data-estilo="calles">Calles</button>
+            </div>
+        </div>
+        <div class="layers-panel-section">
+            <p class="panel-titulo">Capa de clusters (KML)</p>
+            <label class="switch-fila"><input type="checkbox" id="toggle-kml" checked> Mostrar clusters</label>
+            <div class="opacidad-fila">Opacidad
+                <input type="range" id="opacidad-kml" min="10" max="100" value="100">
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PANEL: LEYENDA ============ -->
+    <div class="panel-flotante" id="legend-panel">
+        <p class="panel-titulo">Leyenda de clusters</p>
+        <div id="leyenda-contenido"><div class="vacio">Cargando capa KML…</div></div>
+    </div>
+
+    <!-- ============ RIEL DE HERRAMIENTAS ============ -->
+    <div class="right-rail">
+        <button class="icon-btn" id="btn-layers" title="Capas del mapa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        </button>
+        <button class="icon-btn" id="btn-measure" title="Medir distancia">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20l18-18M8 14l2 2M12 10l2 2M16 6l2 2"></path></svg>
+        </button>
+        <button class="icon-btn" id="btn-draw" title="Colocar marcador">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"></path></svg>
+        </button>
+        <button class="icon-btn" id="btn-legend" title="Leyenda de clusters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        </button>
+        <button class="icon-btn" id="btn-fullscreen" title="Pantalla completa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M21 16v3a2 2 0 01-2 2h-3M8 21H5a2 2 0 01-2-2v-3"></path></svg>
+        </button>
+        <button class="icon-btn" id="btn-print" title="Imprimir mapa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        </button>
+    </div>
+
+    <!-- ============ BANNER DE MODO ACTIVO ============ -->
+    <div class="mode-banner" id="mode-banner">
+        <span id="mode-banner-text">Modo activo</span>
+        <span id="measure-total" class="mono">0 m</span>
+        <button id="btn-limpiar-modo">Limpiar</button>
+        <button id="btn-salir-modo">Salir</button>
+    </div>
+
+    <!-- ============ BARRA DE ESTADO ============ -->
+    <div class="statusbar">
+        <span id="status-left" title="Clic para alternar Lat/Lng ↔ Mercator">-- (Mouse)</span>
+        <span class="status-sep">|</span>
+        <span id="status-crs">WGS 84 / Pseudo-Mercator (EPSG:3857)</span>
+        <div class="status-mid">
+            <span id="status-zoom">Zoom 13</span>
+        </div>
+        <span class="status-right" id="status-right">© OpenStreetMap, © CARTO</span>
     </div>
 
     <div id="toast" class="toast-copiado">¡Copiado al portapapeles!</div>
@@ -350,120 +586,289 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.4/openlocationcode.min.js"></script>
+    <script src="https://unpkg.com/proj4@2.9.0/dist/proj4.js"></script>
 
     <script>
-        // 1. Capas base estilizadas
-        // Mapa base Positron de CartoDB (estilo limpio, ideal "en blanco" para destacar polígonos)
+        /* ==================================================================
+           1. CAPAS BASE
+           ================================================================== */
+        var CENTRO_INICIAL = [31.735, -106.481];
+        var ZOOM_INICIAL = 13;
+
         var capaLimpio = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20,
-            attribution: '© OpenStreetMap, © CartoDB'
+            maxZoom: 20, attribution: '© OpenStreetMap, © CARTO'
         });
-
         var capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            attribution: 'Esri, i-cubed, USDA, USGS'
+            maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'
         });
-
         var capaOscuro = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20,
-            attribution: '© OpenStreetMap, © CartoDB'
+            maxZoom: 20, attribution: '© OpenStreetMap, © CARTO'
+        });
+        var capaTopografico = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            maxZoom: 17, attribution: '© OpenTopoMap (CC-BY-SA)'
+        });
+        var capaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: '© OpenStreetMap contributors'
         });
 
-        // Inicializar mapa centrado con el estilo "Limpio"
+        var CAPAS = { limpio: capaLimpio, satelite: capaSatelite, oscuro: capaOscuro, topografico: capaTopografico, calles: capaCalles };
+        var ATRIBUCIONES = {
+            limpio: '© OpenStreetMap, © CARTO', satelite: 'Esri, Maxar, Earthstar Geographics',
+            oscuro: '© OpenStreetMap, © CARTO', topografico: '© OpenTopoMap (CC-BY-SA)', calles: '© OpenStreetMap contributors'
+        };
+        var ESTILOS_OSCUROS = new Set(['satelite', 'oscuro']);
+
         var map = L.map('mapa', {
-            center: [31.735, -106.481],
-            zoom: 13,
-            zoomControl: true,
+            center: CENTRO_INICIAL,
+            zoom: ZOOM_INICIAL,
+            zoomControl: false,
+            attributionControl: false,
             layers: [capaLimpio]
         });
 
-        // Mover controles de zoom nativos abajo a la derecha para no obstruir el panel de control
-        map.zoomControl.setPosition('bottomright');
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+        L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
 
-        // Cambiar mapa base mediante el switch superior
         function cambiarMapa(tipo) {
-            document.querySelectorAll('.capa-opcion').forEach(el => el.classList.remove('activa'));
-            
-            if (tipo === 'limpio') {
-                map.addLayer(capaLimpio);
-                map.removeLayer(capaSatelite);
-                map.removeLayer(capaOscuro);
-                event.target.classList.add('activa');
-                cambiarColoresInterfaz(false);
-            } else if (tipo === 'satelite') {
-                map.addLayer(capaSatelite);
-                map.removeLayer(capaLimpio);
-                map.removeLayer(capaOscuro);
-                event.target.classList.add('activa');
-                cambiarColoresInterfaz(true);
-            } else if (tipo === 'oscuro') {
-                map.addLayer(capaOscuro);
-                map.removeLayer(capaLimpio);
-                map.removeLayer(capaSatelite);
-                event.target.classList.add('activa');
-                cambiarColoresInterfaz(true);
-            }
+            Object.values(CAPAS).forEach(function (c) { if (map.hasLayer(c)) map.removeLayer(c); });
+            map.addLayer(CAPAS[tipo]);
+            document.querySelectorAll('.estilo-opcion').forEach(function (el) {
+                el.classList.toggle('activa', el.dataset.estilo === tipo);
+            });
+            document.getElementById('status-right').textContent = ATRIBUCIONES[tipo];
+            cambiarColoresInterfaz(ESTILOS_OSCUROS.has(tipo));
         }
+        document.querySelectorAll('.estilo-opcion').forEach(function (btn) {
+            btn.addEventListener('click', function () { cambiarMapa(btn.dataset.estilo); });
+        });
+        cambiarMapa('limpio');
 
-        // Ajuste dinámico de los textos de la interfaz según el fondo para legibilidad óptima
         function cambiarColoresInterfaz(isDarkMap) {
-            const root = document.documentElement;
+            var root = document.documentElement;
             if (isDarkMap) {
-                root.style.setProperty('--bg-glass', 'rgba(17, 24, 39, 0.85)');
-                root.style.setProperty('--border-glass', 'rgba(255, 255, 255, 0.1)');
-                root.style.setProperty('--text-main', '#F9FAFB');
-                root.style.setProperty('--text-muted', '#9CA3AF');
+                root.style.setProperty('--panel-bg', 'rgba(17, 24, 39, 0.86)');
+                root.style.setProperty('--panel-border', 'rgba(255, 255, 255, 0.1)');
+                root.style.setProperty('--hairline', 'rgba(255, 255, 255, 0.12)');
+                root.style.setProperty('--ink', '#F9FAFB');
+                root.style.setProperty('--ink-muted', '#9CA3AF');
             } else {
-                root.style.setProperty('--bg-glass', 'rgba(255, 255, 255, 0.85)');
-                root.style.setProperty('--border-glass', 'rgba(255, 255, 255, 0.4)');
-                root.style.setProperty('--text-main', '#1F2937');
-                root.style.setProperty('--text-muted', '#6B7280');
+                root.style.setProperty('--panel-bg', 'rgba(255, 255, 255, 0.88)');
+                root.style.setProperty('--panel-border', 'rgba(15, 23, 42, 0.08)');
+                root.style.setProperty('--hairline', 'rgba(15, 23, 42, 0.09)');
+                root.style.setProperty('--ink', '#0f172a');
+                root.style.setProperty('--ink-muted', '#64748b');
             }
         }
 
-        // Marcador estético para búsquedas
+        /* ==================================================================
+           2. PANELES DESPLEGABLES (buscador, marcadores, capas, leyenda)
+           ================================================================== */
+        var IDS_PANELES = ['search-panel', 'bookmarks-panel', 'layers-panel', 'legend-panel'];
+        function cerrarTodosPaneles() {
+            IDS_PANELES.forEach(function (id) { document.getElementById(id).classList.remove('show'); });
+        }
+        function togglePanel(id) {
+            var el = document.getElementById(id);
+            var abierto = el.classList.contains('show');
+            cerrarTodosPaneles();
+            if (!abierto) el.classList.add('show');
+        }
+
+        document.getElementById('btn-toggle-search').addEventListener('click', function () { togglePanel('search-panel'); });
+        document.getElementById('btn-bookmarks').addEventListener('click', function () { togglePanel('bookmarks-panel'); renderMarcadores(); });
+        document.getElementById('btn-layers').addEventListener('click', function () { togglePanel('layers-panel'); });
+        document.getElementById('btn-legend').addEventListener('click', function () { togglePanel('legend-panel'); });
+
+        document.getElementById('btn-home').addEventListener('click', function () {
+            map.setView(CENTRO_INICIAL, ZOOM_INICIAL);
+        });
+
+        document.getElementById('btn-locate').addEventListener('click', function () {
+            if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                var lat = pos.coords.latitude, lng = pos.coords.longitude;
+                map.setView([lat, lng], 16);
+                marcadorBusqueda.setLatLng([lat, lng]);
+                if (!map.hasLayer(marcadorBusqueda)) map.addLayer(marcadorBusqueda);
+                actualizarPanelInfo(lat, lng);
+            }, function () {
+                alert('No se pudo obtener tu ubicación.');
+            });
+        });
+
+        document.getElementById('btn-fullscreen').addEventListener('click', function () {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(function () {});
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.getElementById('btn-print').addEventListener('click', function () { window.print(); });
+
+        /* Control de tamaño de fuente */
+        var escalaFuente = parseFloat(localStorage.getItem('clusters_font_scale')) || 13.5;
+        function aplicarEscalaFuente() { document.documentElement.style.setProperty('--font-base', escalaFuente + 'px'); }
+        document.getElementById('font-dec').addEventListener('click', function () {
+            escalaFuente = Math.max(11, escalaFuente - 1); aplicarEscalaFuente();
+            localStorage.setItem('clusters_font_scale', escalaFuente);
+        });
+        document.getElementById('font-inc').addEventListener('click', function () {
+            escalaFuente = Math.min(18, escalaFuente + 1); aplicarEscalaFuente();
+            localStorage.setItem('clusters_font_scale', escalaFuente);
+        });
+        aplicarEscalaFuente();
+
+        /* ==================================================================
+           3. CAPA KML DE CLUSTERS
+           ================================================================== */
+        var capaKml = null;
+
+        fetch('CLUSTERS.kml')
+            .then(function (res) { return res.text(); })
+            .then(function (kmltext) {
+                var parser = new DOMParser();
+                var kml = parser.parseFromString(kmltext, 'text/xml');
+                capaKml = new L.KML(kml);
+                map.addLayer(capaKml);
+
+                var limites = capaKml.getBounds();
+                if (limites.isValid()) map.fitBounds(limites);
+
+                construirLeyenda(capaKml);
+            })
+            .catch(function (err) {
+                console.error('Error cargando KML:', err);
+                document.getElementById('leyenda-contenido').innerHTML = '<div class="vacio">No se pudo cargar CLUSTERS.kml</div>';
+            });
+
+        document.getElementById('toggle-kml').addEventListener('change', function (e) {
+            if (!capaKml) return;
+            if (e.target.checked) { if (!map.hasLayer(capaKml)) map.addLayer(capaKml); }
+            else { if (map.hasLayer(capaKml)) map.removeLayer(capaKml); }
+        });
+
+        document.getElementById('opacidad-kml').addEventListener('input', function (e) {
+            if (!capaKml) return;
+            var val = parseInt(e.target.value, 10) / 100;
+            try {
+                capaKml.eachLayer(function (l) {
+                    if (l.setStyle) l.setStyle({ opacity: val, fillOpacity: val * 0.6 });
+                    if (l.setOpacity) l.setOpacity(val);
+                });
+            } catch (err) { console.error(err); }
+        });
+
+        function construirLeyenda(capa) {
+            try {
+                var grupos = new Map();
+                capa.eachLayer(function (layer) {
+                    var nombre = 'Sin nombre';
+                    try {
+                        if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
+                            nombre = layer.feature.properties.name;
+                        } else if (layer.options && layer.options.name) {
+                            nombre = layer.options.name;
+                        } else if (typeof layer.getPopup === 'function' && layer.getPopup()) {
+                            nombre = layer.getPopup().getContent() || nombre;
+                        }
+                    } catch (e) {}
+                    var color = null;
+                    if (layer.options) color = layer.options.fillColor || layer.options.color || null;
+                    if (!color) return;
+                    if (!grupos.has(color)) grupos.set(color, { color: color, nombres: new Set(), capas: [] });
+                    var g = grupos.get(color);
+                    g.nombres.add(String(nombre).replace(/<[^>]*>/g, '').trim() || 'Sin nombre');
+                    g.capas.push(layer);
+                });
+
+                var contenedor = document.getElementById('leyenda-contenido');
+                if (grupos.size === 0) {
+                    contenedor.innerHTML = '<div class="vacio">La capa no define colores por estilo.</div>';
+                    return;
+                }
+                contenedor.innerHTML = '';
+                var idx = 0;
+                grupos.forEach(function (g) {
+                    idx++;
+                    var fila = document.createElement('div');
+                    fila.className = 'leyenda-fila';
+                    var nombres = Array.from(g.nombres).slice(0, 3).join(', ');
+                    fila.innerHTML =
+                        '<span class="leyenda-swatch" style="background:' + g.color + '"></span>' +
+                        '<span class="leyenda-texto" title="' + nombres.replace(/"/g, '') + '">' + nombres + '</span>' +
+                        '<span class="leyenda-conteo">' + g.capas.length + '</span>';
+                    fila.addEventListener('click', function () {
+                        var grupo = L.featureGroup(g.capas);
+                        var b = grupo.getBounds();
+                        if (b.isValid()) map.fitBounds(b, { maxZoom: 17 });
+                    });
+                    contenedor.appendChild(fila);
+                });
+            } catch (err) {
+                console.error('No se pudo construir la leyenda:', err);
+            }
+        }
+
+        /* ==================================================================
+           4. MARCADOR DE BÚSQUEDA
+           ================================================================== */
         var marcadorBusqueda = L.marker([0, 0]).addTo(map);
         map.removeLayer(marcadorBusqueda);
 
-        // 2. Carga directa de KML respetando colores originales al 100%
-        fetch('CLUSTERS.kml')
-            .then(res => res.text())
-            .then(kmltext => {
-                const parser = new DOMParser();
-                const kml = parser.parseFromString(kmltext, 'text/xml');
-                const capaKml = new L.KML(kml);
-                map.addLayer(capaKml);
-                
-                const limites = capaKml.getBounds();
-                if (limites.isValid()) {
-                    map.fitBounds(limites);
-                }
-            })
-            .catch(err => console.error('Error cargando KML:', err));
-
-        // 3. Sistema dinámico de lectura de cursor en vivo
-        map.on('mousemove', function(e) {
-            document.getElementById('live-lat').textContent = e.latlng.lat.toFixed(6);
-            document.getElementById('live-lng').textContent = e.latlng.lng.toFixed(6);
-        });
-
-        // 4. Conversiones de Coordenadas
+        /* ==================================================================
+           5. CONVERSIÓN DE COORDENADAS (Decimal / DMS / Plus Code / UTM)
+           ================================================================== */
         function decimalToDMS(dd, isLat) {
-            const dir = dd < 0 ? (isLat ? 'S' : 'W') : (isLat ? 'N' : 'E');
-            const absDd = Math.abs(dd);
-            const deg = Math.floor(absDd);
-            const minFrac = (absDd - deg) * 60;
-            const min = Math.floor(minFrac);
-            const sec = ((minFrac - min) * 60).toFixed(2);
-            return `${deg}° ${min}' ${sec}" ${dir}`;
+            var dir = dd < 0 ? (isLat ? 'S' : 'W') : (isLat ? 'N' : 'E');
+            var absDd = Math.abs(dd);
+            var deg = Math.floor(absDd);
+            var minFrac = (absDd - deg) * 60;
+            var min = Math.floor(minFrac);
+            var sec = ((minFrac - min) * 60).toFixed(2);
+            return deg + '° ' + min + "' " + sec + '" ' + dir;
         }
 
         function dmsToDecimal(degrees, minutes, seconds, direction) {
-            let dd = parseFloat(degrees) + parseFloat(minutes)/60 + parseFloat(seconds)/3600;
-            if (['S', 'W', 'O'].includes(direction.toUpperCase())) {
-                dd = dd * -1;
-            }
+            var dd = parseFloat(degrees) + parseFloat(minutes) / 60 + parseFloat(seconds) / 3600;
+            if (['S', 'W', 'O'].includes(direction.toUpperCase())) dd = dd * -1;
             return dd;
+        }
+
+        var BANDAS_UTM = 'CDEFGHJKLMNPQRSTUVWXX';
+        function obtenerBandaUTM(lat) {
+            if (lat < -80 || lat > 84) return 'Z';
+            var idx = Math.floor((lat + 80) / 8);
+            return BANDAS_UTM[Math.min(Math.max(idx, 0), BANDAS_UTM.length - 1)];
+        }
+
+        function parseUTM(texto) {
+            if (typeof proj4 === 'undefined') return null;
+            var m = texto.trim().match(/^(\d{1,2})\s*([A-HJ-NP-Za-hj-np-z])[\s,]+(\d+(?:\.\d+)?)[\s,]+(\d+(?:\.\d+)?)$/);
+            if (!m) return null;
+            var zona = parseInt(m[1], 10);
+            var banda = m[2].toUpperCase();
+            var este = parseFloat(m[3]);
+            var norte = parseFloat(m[4]);
+            if (zona < 1 || zona > 60) return null;
+            var esSur = banda < 'N';
+            var def = '+proj=utm +zone=' + zona + ' +datum=WGS84 +units=m +no_defs' + (esSur ? ' +south' : '');
+            try {
+                var res = proj4(def, 'WGS84', [este, norte]);
+                return { lat: res[1], lng: res[0] };
+            } catch (e) { return null; }
+        }
+
+        function calcularUTM(lat, lng) {
+            if (typeof proj4 === 'undefined') return null;
+            var zona = Math.floor((lng + 180) / 6) + 1;
+            var esSur = lat < 0;
+            var def = '+proj=utm +zone=' + zona + ' +datum=WGS84 +units=m +no_defs' + (esSur ? ' +south' : '');
+            try {
+                var res = proj4('WGS84', def, [lng, lat]);
+                var banda = obtenerBandaUTM(lat);
+                return zona + banda + ' ' + Math.round(res[0]) + ' ' + Math.round(res[1]);
+            } catch (e) { return null; }
         }
 
         function procesarEntrada(texto) {
@@ -471,93 +876,231 @@
 
             // CASO A: Plus Code
             if (texto.includes('+')) {
-                let codigoLimpio = texto.split(/[\s,]+/)[0];
-                if (openLocationCode.isShort(codigoLimpio)) {
-                    codigoLimpio = openLocationCode.recoverNearest(codigoLimpio, 31.735, -106.481);
-                }
-                if (openLocationCode.isValid(codigoLimpio)) {
-                    const decodificado = openLocationCode.decode(codigoLimpio);
-                    return { lat: decodificado.latitudeCenter, lng: decodificado.longitudeCenter };
-                }
+                var codigoLimpio = texto.split(/[\s,]+/)[0];
+                try {
+                    if (openLocationCode.isShort(codigoLimpio)) {
+                        var centro = map.getCenter();
+                        codigoLimpio = openLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
+                    }
+                    if (openLocationCode.isValid(codigoLimpio)) {
+                        var decodificado = openLocationCode.decode(codigoLimpio);
+                        return { lat: decodificado.latitudeCenter, lng: decodificado.longitudeCenter };
+                    }
+                } catch (e) {}
             }
 
-            // CASO B: DMS
-            const regexDMS = /(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?)[′''\s]+(\d+(?:\.\d+)?)"?[″""\s]*([NSEWO])/gi;
-            const matches = [...texto.matchAll(regexDMS)];
+            // CASO B: UTM (zona + banda + este + norte)
+            var utm = parseUTM(texto);
+            if (utm) return utm;
+
+            // CASO C: DMS
+            var regexDMS = /(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?)[′''\s]+(\d+(?:\.\d+)?)"?[″""\s]*([NSEWO])/gi;
+            var matches = [...texto.matchAll(regexDMS)];
             if (matches.length === 2) {
-                const lat = dmsToDecimal(matches[0][1], matches[0][2], matches[0][3], matches[0][4]);
-                const lng = dmsToDecimal(matches[1][1], matches[1][2], matches[1][3], matches[1][4]);
-                return { lat, lng };
+                var lat = dmsToDecimal(matches[0][1], matches[0][2], matches[0][3], matches[0][4]);
+                var lng = dmsToDecimal(matches[1][1], matches[1][2], matches[1][3], matches[1][4]);
+                return { lat: lat, lng: lng };
             }
 
-            // CASO C: Decimales directos
-            const cleanStr = texto.replace(/[,;]/g, ' ');
-            const partes = cleanStr.trim().split(/\s+/);
+            // CASO D: Decimales directos
+            var cleanStr = texto.replace(/[,;]/g, ' ');
+            var partes = cleanStr.trim().split(/\s+/);
             if (partes.length === 2) {
-                const lat = parseFloat(partes[0]);
-                const lng = parseFloat(partes[1]);
-                if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                    return { lat, lng };
+                var latD = parseFloat(partes[0]);
+                var lngD = parseFloat(partes[1]);
+                if (!isNaN(latD) && !isNaN(lngD) && latD >= -90 && latD <= 90 && lngD >= -180 && lngD <= 180) {
+                    return { lat: latD, lng: lngD };
                 }
             }
             return null;
         }
 
         function actualizarPanelInfo(lat, lng) {
-            const dmsLat = decimalToDMS(lat, true);
-            const dmsLng = decimalToDMS(lng, false);
-            const plusCode = openLocationCode.encode(lat, lng);
+            var dmsLat = decimalToDMS(lat, true);
+            var dmsLng = decimalToDMS(lng, false);
+            var plusCode = '-';
+            try { plusCode = openLocationCode.encode(lat, lng); } catch (e) {}
+            var utmTexto = calcularUTM(lat, lng) || 'No disponible';
 
-            document.getElementById('info-decimal').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            document.getElementById('info-dms').textContent = `${dmsLat} ${dmsLng}`;
+            document.getElementById('info-decimal').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+            document.getElementById('info-dms').textContent = dmsLat + ' ' + dmsLng;
             document.getElementById('info-plus').textContent = plusCode;
-            document.getElementById('panel-info').style.display = 'block';
+            document.getElementById('info-utm').textContent = utmTexto;
+            document.getElementById('panel-info').classList.add('visible');
+            document.getElementById('chip-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
         }
 
         function ejecutarBusqueda() {
-            const input = document.getElementById('buscador-input').value;
-            const coordenadas = procesarEntrada(input);
+            var input = document.getElementById('buscador-input').value;
+            var coordenadas = procesarEntrada(input);
 
             if (coordenadas) {
-                const { lat, lng } = coordenadas;
+                var lat = coordenadas.lat, lng = coordenadas.lng;
                 map.setView([lat, lng], 17);
                 marcadorBusqueda.setLatLng([lat, lng]);
-                if (!map.hasLayer(marcadorBusqueda)) {
-                    map.addLayer(marcadorBusqueda);
-                }
+                if (!map.hasLayer(marcadorBusqueda)) map.addLayer(marcadorBusqueda);
                 actualizarPanelInfo(lat, lng);
             } else {
                 alert('No se pudo identificar el formato. Comprueba el formato e intenta nuevamente.');
             }
         }
 
-        // Eventos
         document.getElementById('btn-buscar').addEventListener('click', ejecutarBusqueda);
-        document.getElementById('buscador-input').addEventListener('keypress', function(e) {
+        document.getElementById('buscador-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') ejecutarBusqueda();
         });
 
-        map.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            marcadorBusqueda.setLatLng([lat, lng]);
-            if (!map.hasLayer(marcadorBusqueda)) {
-                map.addLayer(marcadorBusqueda);
-            }
-            actualizarPanelInfo(lat, lng);
-        });
-
-        // Copiar rápido al portapapeles con Toast de confirmación
         function copiarTexto(idElemento) {
-            const texto = document.getElementById(idElemento).textContent;
-            navigator.clipboard.writeText(texto).then(() => {
-                const toast = document.getElementById('toast');
+            var texto = document.getElementById(idElemento).textContent;
+            navigator.clipboard.writeText(texto).then(function () {
+                var toast = document.getElementById('toast');
                 toast.classList.add('show');
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 2000);
+                setTimeout(function () { toast.classList.remove('show'); }, 2000);
             });
         }
+
+        /* ==================================================================
+           6. MODOS: MEDIR DISTANCIA / COLOCAR MARCADORES
+           ================================================================== */
+        var modoActivo = null; // 'measure' | 'draw' | null
+
+        function setModo(nuevo) {
+            modoActivo = (modoActivo === nuevo) ? null : nuevo;
+            document.getElementById('btn-measure').classList.toggle('activo', modoActivo === 'measure');
+            document.getElementById('btn-draw').classList.toggle('activo', modoActivo === 'draw');
+            var banner = document.getElementById('mode-banner');
+            var texto = document.getElementById('mode-banner-text');
+            var total = document.getElementById('measure-total');
+            if (modoActivo === 'measure') {
+                banner.classList.add('show'); texto.textContent = 'Modo medición: clic en el mapa para agregar puntos'; total.style.display = 'inline';
+            } else if (modoActivo === 'draw') {
+                banner.classList.add('show'); texto.textContent = 'Modo marcador: clic en el mapa para colocar un pin'; total.style.display = 'none';
+            } else {
+                banner.classList.remove('show');
+            }
+            map.getContainer().style.cursor = modoActivo ? 'crosshair' : '';
+        }
+
+        document.getElementById('btn-measure').addEventListener('click', function () { setModo('measure'); });
+        document.getElementById('btn-draw').addEventListener('click', function () { setModo('draw'); });
+        document.getElementById('btn-salir-modo').addEventListener('click', function () { modoActivo = null; setModo(null); });
+        document.getElementById('btn-limpiar-modo').addEventListener('click', function () {
+            if (modoActivo === 'measure') limpiarMedicion();
+        });
+
+        function formatDistancia(m) { return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : m.toFixed(1) + ' m'; }
+
+        var puntosMedicion = [];
+        var lineaMedicion = null;
+        var marcadoresMedicion = [];
+        function addMeasurePoint(latlng) {
+            puntosMedicion.push(latlng);
+            var m = L.circleMarker(latlng, { radius: 5, color: '#fff', weight: 2, fillColor: '#059669', fillOpacity: 1 }).addTo(map);
+            marcadoresMedicion.push(m);
+            if (lineaMedicion) map.removeLayer(lineaMedicion);
+            lineaMedicion = L.polyline(puntosMedicion, { color: '#059669', weight: 3, dashArray: '6 6' }).addTo(map);
+            var total = 0;
+            for (var i = 1; i < puntosMedicion.length; i++) total += puntosMedicion[i - 1].distanceTo(puntosMedicion[i]);
+            document.getElementById('measure-total').textContent = formatDistancia(total);
+        }
+        function limpiarMedicion() {
+            puntosMedicion = [];
+            if (lineaMedicion) { map.removeLayer(lineaMedicion); lineaMedicion = null; }
+            marcadoresMedicion.forEach(function (m) { map.removeLayer(m); });
+            marcadoresMedicion = [];
+            document.getElementById('measure-total').textContent = '0 m';
+        }
+
+        var marcadoresCustom = [];
+        var contadorMarcadores = 0;
+        function generarPopupMarcador(latlng, id) {
+            var dms = decimalToDMS(latlng.lat, true) + ' ' + decimalToDMS(latlng.lng, false);
+            return '<div class="popup-contenido">' +
+                '<div class="popup-fila"><b>Decimal:</b> ' + latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6) + '</div>' +
+                '<div class="popup-fila"><b>DMS:</b> ' + dms + '</div>' +
+                '<button class="popup-btn-eliminar" onclick="eliminarMarcador(' + id + ')">Eliminar marcador</button>' +
+                '</div>';
+        }
+        function addCustomMarker(latlng) {
+            var id = contadorMarcadores++;
+            var marker = L.marker(latlng, { draggable: true }).addTo(map);
+            marker._idPersonalizado = id;
+            marker.bindPopup(generarPopupMarcador(latlng, id)).openPopup();
+            marker.on('dragend', function (e) { marker.setPopupContent(generarPopupMarcador(e.target.getLatLng(), id)); });
+            marcadoresCustom.push(marker);
+        }
+        function eliminarMarcador(id) {
+            var idx = marcadoresCustom.findIndex(function (m) { return m._idPersonalizado === id; });
+            if (idx > -1) { map.removeLayer(marcadoresCustom[idx]); marcadoresCustom.splice(idx, 1); }
+        }
+
+        map.on('click', function (e) {
+            if (modoActivo === 'measure') { addMeasurePoint(e.latlng); return; }
+            if (modoActivo === 'draw') { addCustomMarker(e.latlng); return; }
+            var lat = e.latlng.lat, lng = e.latlng.lng;
+            marcadorBusqueda.setLatLng([lat, lng]);
+            if (!map.hasLayer(marcadorBusqueda)) map.addLayer(marcadorBusqueda);
+            actualizarPanelInfo(lat, lng);
+            var searchPanel = document.getElementById('search-panel');
+            if (!searchPanel.classList.contains('show')) togglePanel('search-panel');
+        });
+
+        /* ==================================================================
+           7. MARCADORES GUARDADOS (localStorage)
+           ================================================================== */
+        function obtenerMarcadoresGuardados() {
+            try { return JSON.parse(localStorage.getItem('clusters_bookmarks') || '[]'); } catch (e) { return []; }
+        }
+        function guardarMarcadoresGuardados(lista) { localStorage.setItem('clusters_bookmarks', JSON.stringify(lista)); }
+        function escaparHtml(s) {
+            return String(s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+        function renderMarcadores() {
+            var cont = document.getElementById('lista-marcadores');
+            var lista = obtenerMarcadoresGuardados();
+            if (lista.length === 0) { cont.innerHTML = '<div class="vacio">Sin marcadores guardados</div>'; return; }
+            cont.innerHTML = lista.map(function (b, i) {
+                return '<div class="marcador-fila">' +
+                    '<button class="marcador-nombre" onclick="irAMarcador(' + i + ')">' + escaparHtml(b.nombre) + '</button>' +
+                    '<button class="marcador-borrar" onclick="borrarMarcador(' + i + ')" title="Eliminar">✕</button>' +
+                    '</div>';
+            }).join('');
+        }
+        function irAMarcador(i) { var b = obtenerMarcadoresGuardados()[i]; if (b) map.setView([b.lat, b.lng], b.zoom); }
+        function borrarMarcador(i) { var lista = obtenerMarcadoresGuardados(); lista.splice(i, 1); guardarMarcadoresGuardados(lista); renderMarcadores(); }
+
+        document.getElementById('btn-agregar-marcador').addEventListener('click', function () {
+            var input = document.getElementById('nombre-marcador-input');
+            var lista = obtenerMarcadoresGuardados();
+            var nombre = input.value.trim() || ('Punto ' + (lista.length + 1));
+            var centro = map.getCenter();
+            lista.push({ nombre: nombre, lat: centro.lat, lng: centro.lng, zoom: map.getZoom() });
+            guardarMarcadoresGuardados(lista);
+            input.value = '';
+            renderMarcadores();
+        });
+        renderMarcadores();
+
+        /* ==================================================================
+           8. BARRA DE ESTADO INFERIOR
+           ================================================================== */
+        var modoCoordEstado = 'latlng';
+        document.getElementById('status-left').addEventListener('click', function () {
+            modoCoordEstado = modoCoordEstado === 'latlng' ? 'xy' : 'latlng';
+        });
+        map.on('mousemove', function (e) {
+            var el = document.getElementById('status-left');
+            if (modoCoordEstado === 'latlng') {
+                el.textContent = e.latlng.lat.toFixed(6) + ', ' + e.latlng.lng.toFixed(6) + ' (Mouse)';
+            } else {
+                var p = L.CRS.EPSG3857.project(e.latlng);
+                el.textContent = p.x.toFixed(2) + ', ' + p.y.toFixed(2) + ' (Mouse)';
+            }
+        });
+        map.on('zoomend', function () { document.getElementById('status-zoom').textContent = 'Zoom ' + map.getZoom(); });
+        document.getElementById('status-zoom').textContent = 'Zoom ' + map.getZoom();
     </script>
 </body>
 </html>
