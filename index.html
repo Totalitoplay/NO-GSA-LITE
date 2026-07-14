@@ -870,21 +870,20 @@
 
             // CASO A: Plus Code (Soporta formatos mezclados con texto como "HHX8+JR5 Juárez, Chihuahua")
             if (texto.includes('+')) {
-                // Esta fórmula extrae estrictamente el Plus Code, ignorando cualquier palabra alrededor
+                // Extrae estrictamente el Plus Code, ignorando cualquier palabra alrededor
                 var matchPlusCode = texto.match(/[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,4}/i);
                 
                 if (matchPlusCode) {
                     var codigoLimpio = matchPlusCode[0].toUpperCase();
                     try {
-                        // Si es un código corto (local), usamos el centro de tu mapa actual para reconstruir el global
-                        if (OpenLocationCode.isShort(codigoLimpio)) {
+                        // Ojo aquí: openLocationCode con "o" minúscula
+                        if (openLocationCode.isShort(codigoLimpio)) {
                             var centro = map.getCenter();
-                            codigoLimpio = OpenLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
+                            codigoLimpio = openLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
                         }
                         
-                        // Verificamos que sea válido y completo para poder decodificarlo
-                        if (OpenLocationCode.isValid(codigoLimpio) && OpenLocationCode.isFull(codigoLimpio)) {
-                            var decodificado = OpenLocationCode.decode(codigoLimpio);
+                        if (openLocationCode.isValid(codigoLimpio) && openLocationCode.isFull(codigoLimpio)) {
+                            var decodificado = openLocationCode.decode(codigoLimpio);
                             return { lat: decodificado.latitudeCenter, lng: decodificado.longitudeCenter };
                         }
                     } catch (e) {
@@ -893,11 +892,11 @@
                 }
             }
 
-            // CASO B: UTM (zona + banda + este + norte)
+            // CASO B: UTM
             var utm = parseUTM(texto);
             if (utm) return utm;
 
-            // CASO C: DMS (Grados, Minutos y Segundos)
+            // CASO C: DMS
             var regexDMS = /(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?)[′''\s]+(\d+(?:\.\d+)?)"?[″""\s]*([NSEWO])/gi;
             var matches = [...texto.matchAll(regexDMS)];
             if (matches.length === 2) {
@@ -906,17 +905,16 @@
                 return { lat: lat, lng: lng };
             }
 
-            // CASO D: Decimales directos (Soporta si hay texto extra después de las coordenadas)
+            // CASO D: Decimales directos
             var cleanStr = texto.replace(/[,;]/g, ' ');
             var partes = cleanStr.trim().split(/\s+/);
-            if (partes.length >= 2) { 
+            if (partes.length >= 2) {
                 var latD = parseFloat(partes[0]);
                 var lngD = parseFloat(partes[1]);
                 if (!isNaN(latD) && !isNaN(lngD) && latD >= -90 && latD <= 90 && lngD >= -180 && lngD <= 180) {
                     return { lat: latD, lng: lngD };
                 }
             }
-            
             return null;
         }
 
@@ -924,8 +922,9 @@
             var dmsLat = decimalToDMS(lat, true);
             var dmsLng = decimalToDMS(lng, false);
             var plusCode = '-';
-            // Corrección: OpenLocationCode va con O mayúscula
-            try { plusCode = OpenLocationCode.encode(lat, lng); } catch (e) {}
+            
+            // Ojo aquí: openLocationCode con "o" minúscula
+            try { plusCode = openLocationCode.encode(lat, lng); } catch (e) {}
             var utmTexto = calcularUTM(lat, lng) || 'No disponible';
 
             document.getElementById('info-decimal').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
