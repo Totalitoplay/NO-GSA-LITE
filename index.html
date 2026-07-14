@@ -576,7 +576,9 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.4/openlocationcode.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openlocationcode/1.0.4/openlocationcode.min.js"></script>
+    
     <script src="https://unpkg.com/proj4@2.9.0/dist/proj4.js"></script>
     <script>
         /* ==================================================================
@@ -585,7 +587,6 @@
         var CENTRO_INICIAL = [31.735, -106.481];
         var ZOOM_INICIAL = 13;
 
-        // Se agregó la capa base de Google Maps Calles
         var capaGoogle = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
             maxZoom: 20, attribution: '© Google'
         });
@@ -601,7 +602,6 @@
             maxZoom: 19, attribution: '© OpenStreetMap contributors'
         });
 
-        // Actualizadas las referencias
         var CAPAS = { google: capaGoogle, satelite: capaSatelite, topografico: capaTopografico, calles: capaCalles };
         var ATRIBUCIONES = {
             google: '© Google', 
@@ -616,7 +616,7 @@
             zoom: ZOOM_INICIAL,
             zoomControl: false,
             attributionControl: false,
-            layers: [capaGoogle] // Empieza con Google
+            layers: [capaGoogle]
         });
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
@@ -634,7 +634,7 @@
         document.querySelectorAll('.estilo-opcion').forEach(function (btn) {
             btn.addEventListener('click', function () { cambiarMapa(btn.dataset.estilo); });
         });
-        cambiarMapa('google'); // Inicializar con Google Maps
+        cambiarMapa('google');
 
         function cambiarColoresInterfaz(isDarkMap) {
             var root = document.documentElement;
@@ -654,7 +654,7 @@
         }
 
         /* ==================================================================
-           2. PANELES DESPLEGABLES (buscador, marcadores, capas, leyenda)
+           2. PANELES DESPLEGABLES
            ================================================================== */
         var IDS_PANELES = ['search-panel', 'bookmarks-panel', 'layers-panel', 'legend-panel'];
         function cerrarTodosPaneles() {
@@ -699,7 +699,6 @@
 
         document.getElementById('btn-print').addEventListener('click', function () { window.print(); });
 
-        /* Control de tamaño de fuente */
         var escalaFuente = parseFloat(localStorage.getItem('clusters_font_scale')) || 13.5;
         function aplicarEscalaFuente() { document.documentElement.style.setProperty('--font-base', escalaFuente + 'px'); }
         document.getElementById('font-dec').addEventListener('click', function () {
@@ -864,17 +863,15 @@
             } catch (e) { return null; }
         }
 
-function procesarEntrada(texto) {
+        function procesarEntrada(texto) {
             texto = texto.trim();
 
-            // CASO A: Plus Code (Soporta textos mezclados como "HHX8+JR5 Juárez, Chihuahua")
             if (texto.includes('+')) {
                 var matchPlusCode = texto.match(/[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,4}/i);
                 
                 if (matchPlusCode) {
                     var codigoLimpio = matchPlusCode[0].toUpperCase();
                     try {
-                        // Usamos OpenLocationCode con O mayúscula
                         if (OpenLocationCode.isShort(codigoLimpio)) {
                             var centro = map.getCenter();
                             codigoLimpio = OpenLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
@@ -890,11 +887,9 @@ function procesarEntrada(texto) {
                 }
             }
 
-            // CASO B: UTM
             var utm = parseUTM(texto);
             if (utm) return utm;
 
-            // CASO C: DMS
             var regexDMS = /(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?)[′''\s]+(\d+(?:\.\d+)?)"?[″""\s]*([NSEWO])/gi;
             var matches = [...texto.matchAll(regexDMS)];
             if (matches.length === 2) {
@@ -903,7 +898,6 @@ function procesarEntrada(texto) {
                 return { lat: lat, lng: lng };
             }
 
-            // CASO D: Decimales directos
             var cleanStr = texto.replace(/[,;]/g, ' ');
             var partes = cleanStr.trim().split(/\s+/);
             if (partes.length >= 2) {
@@ -922,7 +916,6 @@ function procesarEntrada(texto) {
             var plusCode = '-';
             
             try { 
-                // Usamos OpenLocationCode con O mayúscula
                 plusCode = OpenLocationCode.encode(lat, lng); 
             } catch (e) {
                 console.error("No se pudo codificar el Plus Code", e);
@@ -970,7 +963,7 @@ function procesarEntrada(texto) {
         /* ==================================================================
            6. MODOS: MEDIR DISTANCIA / COLOCAR MARCADORES
            ================================================================== */
-        var modoActivo = null; // 'measure' | 'draw' | null
+        var modoActivo = null;
 
         function setModo(nuevo) {
             modoActivo = (modoActivo === nuevo) ? null : nuevo;
@@ -1054,7 +1047,7 @@ function procesarEntrada(texto) {
         });
 
         /* ==================================================================
-           7. MARCADORES GUARDADOS (localStorage)
+           7. MARCADORES GUARDADOS
            ================================================================== */
         function obtenerMarcadoresGuardados() {
             try { return JSON.parse(localStorage.getItem('clusters_bookmarks') || '[]'); } catch (e) { return []; }
