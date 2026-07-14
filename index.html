@@ -442,35 +442,17 @@
             .brand-chip span:not(.dot) { display: none; }
         }
         /* Estilo del marcador tipo Google Maps */
-.marker-google-style {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 32px !important;
-    height: 40px !important;
-    margin-left: -16px !important;
-    margin-top: -40px !important;
-    pointer-events: none;
-}
-
-.marker-pin {
-    width: 26px;
-    height: 35px;
-    background: #ea4335; /* Color rojo Google */
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    border: 2px solid #fff;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
-
-.marker-shadow {
-    width: 16px;
-    height: 8px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 50%;
-    margin-top: -10px;
-    filter: blur(2px);
-}
+        .marker-google-style {
+            width: 24px !important;
+            height: 24px !important;
+            margin-left: -12px !important;
+            margin-top: -12px !important;
+            border-radius: 50%;
+            background-color: #fbbc05; /* Naranja/Amarillo de Google */
+            border: 3px solid #ffffff; /* Borde blanco grueso */
+            box-shadow: 0 0 4px rgba(0,0,0,0.4); /* Sombra para profundidad */
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -835,12 +817,14 @@
         /* ==================================================================
            4. MARCADOR DE BÚSQUEDA
            ================================================================== */
-            var iconGoogle = L.divIcon({
-                className: 'marker-google-style',
-                html: '<div class="marker-pin"></div><div class="marker-shadow"></div>',
-                iconSize: [32, 40]
-            });
+        var iconGoogle = L.divIcon({
+            className: 'marker-google-style',
+            html: '', // No necesitamos HTML interno, el CSS hace todo
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
 
+        // Asegúrate de que tu marcador use este icono
         var marcadorBusqueda = L.marker([0, 0], { icon: iconGoogle }).addTo(map);
         map.removeLayer(marcadorBusqueda);
 
