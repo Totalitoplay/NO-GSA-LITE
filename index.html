@@ -274,7 +274,7 @@
         /* Selector de estilos de mapa */
         .estilo-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
         .estilo-opcion {
-            flex: 1 1 30%;
+            flex: 1 1 45%;
             text-align: center;
             padding: 8px 4px;
             font-size: 11.5px;
@@ -445,7 +445,6 @@
 </head>
 <body>
 
-    <!-- ============ BARRA SUPERIOR ============ -->
     <div class="topbar">
         <button class="icon-btn" id="btn-locate" title="Mi ubicación">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
@@ -472,7 +471,6 @@
         </div>
     </div>
 
-    <!-- ============ PANEL: BUSCADOR ============ -->
     <div class="panel-flotante" id="search-panel">
         <p class="panel-titulo">Buscar ubicación</p>
         <div class="busqueda-container">
@@ -501,7 +499,6 @@
         </div>
     </div>
 
-    <!-- ============ PANEL: MARCADORES GUARDADOS ============ -->
     <div class="panel-flotante" id="bookmarks-panel">
         <p class="panel-titulo">Marcadores guardados</p>
         <div class="bookmarks-panel-header">
@@ -511,16 +508,14 @@
         <div id="lista-marcadores"></div>
     </div>
 
-    <!-- ============ PANEL: CAPAS ============ -->
     <div class="panel-flotante" id="layers-panel">
         <div class="layers-panel-section">
             <p class="panel-titulo">Estilo de mapa</p>
             <div class="estilo-lista">
-                <button class="estilo-opcion activa" data-estilo="limpio">Claro</button>
+                <button class="estilo-opcion activa" data-estilo="google">Google Maps</button>
                 <button class="estilo-opcion" data-estilo="satelite">Satélite</button>
-                <button class="estilo-opcion" data-estilo="oscuro">Oscuro</button>
                 <button class="estilo-opcion" data-estilo="topografico">Topográfico</button>
-                <button class="estilo-opcion" data-estilo="calles">Calles</button>
+                <button class="estilo-opcion" data-estilo="calles">Calles (OSM)</button>
             </div>
         </div>
         <div class="layers-panel-section">
@@ -532,13 +527,11 @@
         </div>
     </div>
 
-    <!-- ============ PANEL: LEYENDA ============ -->
     <div class="panel-flotante" id="legend-panel">
         <p class="panel-titulo">Leyenda de clusters</p>
         <div id="leyenda-contenido"><div class="vacio">Cargando capa KML…</div></div>
     </div>
 
-    <!-- ============ RIEL DE HERRAMIENTAS ============ -->
     <div class="right-rail">
         <button class="icon-btn" id="btn-layers" title="Capas del mapa">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
@@ -560,7 +553,6 @@
         </button>
     </div>
 
-    <!-- ============ BANNER DE MODO ACTIVO ============ -->
     <div class="mode-banner" id="mode-banner">
         <span id="mode-banner-text">Modo activo</span>
         <span id="measure-total" class="mono">0 m</span>
@@ -568,7 +560,6 @@
         <button id="btn-salir-modo">Salir</button>
     </div>
 
-    <!-- ============ BARRA DE ESTADO ============ -->
     <div class="statusbar">
         <span id="status-left" title="Clic para alternar Lat/Lng ↔ Mercator">-- (Mouse)</span>
         <span class="status-sep">|</span>
@@ -576,7 +567,7 @@
         <div class="status-mid">
             <span id="status-zoom">Zoom 13</span>
         </div>
-        <span class="status-right" id="status-right">© OpenStreetMap, © CARTO</span>
+        <span class="status-right" id="status-right">© Google</span>
     </div>
 
     <div id="toast" class="toast-copiado">¡Copiado al portapapeles!</div>
@@ -595,15 +586,15 @@
         var CENTRO_INICIAL = [31.735, -106.481];
         var ZOOM_INICIAL = 13;
 
-        var capaLimpio = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20, attribution: '© OpenStreetMap, © CARTO'
+        // Se agregó la capa base de Google Maps Calles
+        var capaGoogle = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20, attribution: '© Google'
         });
+        
         var capaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics'
         });
-        var capaOscuro = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20, attribution: '© OpenStreetMap, © CARTO'
-        });
+        
         var capaTopografico = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
             maxZoom: 17, attribution: '© OpenTopoMap (CC-BY-SA)'
         });
@@ -611,19 +602,22 @@
             maxZoom: 19, attribution: '© OpenStreetMap contributors'
         });
 
-        var CAPAS = { limpio: capaLimpio, satelite: capaSatelite, oscuro: capaOscuro, topografico: capaTopografico, calles: capaCalles };
+        // Actualizadas las referencias
+        var CAPAS = { google: capaGoogle, satelite: capaSatelite, topografico: capaTopografico, calles: capaCalles };
         var ATRIBUCIONES = {
-            limpio: '© OpenStreetMap, © CARTO', satelite: 'Esri, Maxar, Earthstar Geographics',
-            oscuro: '© OpenStreetMap, © CARTO', topografico: '© OpenTopoMap (CC-BY-SA)', calles: '© OpenStreetMap contributors'
+            google: '© Google', 
+            satelite: 'Esri, Maxar, Earthstar Geographics',
+            topografico: '© OpenTopoMap (CC-BY-SA)', 
+            calles: '© OpenStreetMap contributors'
         };
-        var ESTILOS_OSCUROS = new Set(['satelite', 'oscuro']);
+        var ESTILOS_OSCUROS = new Set(['satelite']);
 
         var map = L.map('mapa', {
             center: CENTRO_INICIAL,
             zoom: ZOOM_INICIAL,
             zoomControl: false,
             attributionControl: false,
-            layers: [capaLimpio]
+            layers: [capaGoogle] // Empieza con Google
         });
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
@@ -641,7 +635,7 @@
         document.querySelectorAll('.estilo-opcion').forEach(function (btn) {
             btn.addEventListener('click', function () { cambiarMapa(btn.dataset.estilo); });
         });
-        cambiarMapa('limpio');
+        cambiarMapa('google'); // Inicializar con Google Maps
 
         function cambiarColoresInterfaz(isDarkMap) {
             var root = document.documentElement;
@@ -874,19 +868,21 @@
         function procesarEntrada(texto) {
             texto = texto.trim();
 
-            // CASO A: Plus Code
+            // CASO A: Plus Code (Corrección: OpenLocationCode va con O mayúscula)
             if (texto.includes('+')) {
                 var codigoLimpio = texto.split(/[\s,]+/)[0];
                 try {
-                    if (openLocationCode.isShort(codigoLimpio)) {
+                    if (OpenLocationCode.isShort(codigoLimpio)) {
                         var centro = map.getCenter();
-                        codigoLimpio = openLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
+                        codigoLimpio = OpenLocationCode.recoverNearest(codigoLimpio, centro.lat, centro.lng);
                     }
-                    if (openLocationCode.isValid(codigoLimpio)) {
-                        var decodificado = openLocationCode.decode(codigoLimpio);
+                    if (OpenLocationCode.isValid(codigoLimpio)) {
+                        var decodificado = OpenLocationCode.decode(codigoLimpio);
                         return { lat: decodificado.latitudeCenter, lng: decodificado.longitudeCenter };
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error("Error al procesar Plus Code:", e);
+                }
             }
 
             // CASO B: UTM (zona + banda + este + norte)
@@ -919,7 +915,8 @@
             var dmsLat = decimalToDMS(lat, true);
             var dmsLng = decimalToDMS(lng, false);
             var plusCode = '-';
-            try { plusCode = openLocationCode.encode(lat, lng); } catch (e) {}
+            // Corrección: OpenLocationCode va con O mayúscula
+            try { plusCode = OpenLocationCode.encode(lat, lng); } catch (e) {}
             var utmTexto = calcularUTM(lat, lng) || 'No disponible';
 
             document.getElementById('info-decimal').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
