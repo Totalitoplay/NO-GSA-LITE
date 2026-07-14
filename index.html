@@ -628,7 +628,10 @@
             zoom: ZOOM_INICIAL,
             zoomControl: false,
             attributionControl: false,
-            layers: [capaGoogle]
+            layers: [capaGoogle],
+            // Agrega estas líneas para estabilizar el renderizado
+            fadeAnimation: false, 
+            markerZoomAnimation: false
         });
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
@@ -735,7 +738,12 @@
                 var kml = parser.parseFromString(kmltext, 'text/xml');
                 capaKml = new L.KML(kml);
                 map.addLayer(capaKml);
-
+                    map.on('moveend', function() {
+                        if (capaKml) {
+                            // Esto fuerza a Leaflet a recalcular la posición de los elementos SVG
+                            capaKml.redraw ? capaKml.redraw() : null;
+                        }
+                    });
                 var limites = capaKml.getBounds();
                 if (limites.isValid()) map.fitBounds(limites);
 
