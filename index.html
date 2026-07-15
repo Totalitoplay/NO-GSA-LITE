@@ -755,9 +755,19 @@
                 track.eachLayer(function (layer) {
                     if (layer.setStyle) {
                         layer.on('click', function (e) {
-                            L.DomEvent.stopPropagation(e);
+                            L.DomEvent.stopPropagation(e); // Evita que el clic pase al fondo del mapa
                             
-                            // 1. Extraemos solo el nombre
+                            // SI ESTAMOS EN MODO MEDIR O DIBUJAR, usamos esa lógica y NO abrimos el popup
+                            if (modoActivo === 'measure') { 
+                                addMeasurePoint(e.latlng); 
+                                return; 
+                            }
+                            if (modoActivo === 'draw') { 
+                                addCustomMarker(e.latlng); 
+                                return; 
+                            }
+                            
+                            // Si no hay modo activo, mostramos el nombre del clúster
                             var nombre = 'Cluster';
                             try {
                                 if (layer.feature && layer.feature.properties && layer.feature.properties.name) nombre = layer.feature.properties.name;
@@ -765,8 +775,6 @@
                             } catch (err) {}
                             nombre = String(nombre).replace(/<[^>]*>/g, '').trim() || 'Cluster';
                             
-                            // 2. Mostramos el popup EXACTAMENTE donde se hizo clic (e.latlng)
-                            // y le decimos al mapa que no se mueva (autoPan: false)
                             L.popup({ autoPan: false })
                                 .setLatLng(e.latlng)
                                 .setContent('<b>' + nombre + '</b>')
