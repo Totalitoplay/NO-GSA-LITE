@@ -12,10 +12,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <style>
-        /* Previene que Leaflet destruya los objetos al hacer scroll */
-        .leaflet-container .leaflet-overlay-pane svg {
-            overflow: visible !important;
-        }
+
         :root {
             --accent: #059669;
             --accent-dark: #047857;
@@ -633,9 +630,10 @@
             zoomControl: false,
             attributionControl: false,
             layers: [capaGoogle],
+            preferCanvas: true,
             // Agrega estas líneas para estabilizar el renderizado
-            fadeAnimation: false, 
-            markerZoomAnimation: false
+           // fadeAnimation: false, 
+            //markerZoomAnimation: false
         });
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
