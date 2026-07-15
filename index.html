@@ -12,6 +12,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <style>
+        /* Previene que Leaflet destruya los objetos al hacer scroll */
+        .leaflet-container .leaflet-overlay-pane svg {
+            overflow: visible !important;
+        }
         :root {
             --accent: #059669;
             --accent-dark: #047857;
@@ -729,29 +733,26 @@
         /* ==================================================================
            3. CAPA KML DE CLUSTERS
            ================================================================== */
-        var capaKml = null;
+        var capaKml = new L.FeatureGroup(); // Creamos un grupo persistente
+        map.addLayer(capaKml); // Siempre está activo
 
         fetch('CLUSTERS.kml')
             .then(function (res) { return res.text(); })
             .then(function (kmltext) {
                 var parser = new DOMParser();
                 var kml = parser.parseFromString(kmltext, 'text/xml');
-                capaKml = new L.KML(kml);
-                map.addLayer(capaKml);
-                    map.on('moveend', function() {
-                        if (capaKml) {
-                            // Esto fuerza a Leaflet a recalcular la posición de los elementos SVG
-                            capaKml.redraw ? capaKml.redraw() : null;
-                        }
-                    });
-                var limites = capaKml.getBounds();
+                var track = new L.KML(kml);
+                
+                // En lugar de añadir track directamente al mapa, lo añadimos al grupo
+                capaKml.addLayer(track);
+
+                var limites = track.getBounds();
                 if (limites.isValid()) map.fitBounds(limites);
 
-                construirLeyenda(capaKml);
+                construirLeyenda(track);
             })
             .catch(function (err) {
                 console.error('Error cargando KML:', err);
-                document.getElementById('leyenda-contenido').innerHTML = '<div class="vacio">No se pudo cargar CLUSTERS.kml</div>';
             });
 
         document.getElementById('toggle-kml').addEventListener('change', function (e) {
