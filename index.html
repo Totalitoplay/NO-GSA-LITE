@@ -742,6 +742,7 @@
         /* ==================================================================
            3. CAPA KML DE CLUSTERS
            ================================================================== */
+        
         var capaKml = new L.FeatureGroup();
         map.addLayer(capaKml);
 
@@ -760,7 +761,7 @@
         }
 
         function deseleccionarCluster() {
-            if (clusterSeleccionado && estiloOriginalSeleccionado && clusterSeleccionado.setStyle) {
+            if (clusterSeleccionado && estiloOriginalSelevar capaKml = new L.FeatureGroup();ccionado && clusterSeleccionado.setStyle) {
                 clusterSeleccionado.setStyle(estiloOriginalSeleccionado);
                 clusterSeleccionado.closePopup();
             }
@@ -786,7 +787,7 @@
             layer.bindPopup('<b>' + nombre + '</b>').openPopup();
         }
 
-        fetch('CLUSTERS.kml')
+            fetch('CLUSTERS.kml')
             .then(function (res) { return res.text(); })
             .then(function (kmltext) {
                 var parser = new DOMParser();
@@ -799,7 +800,21 @@
                     if (layer.setStyle) {
                         layer.on('click', function (e) {
                             L.DomEvent.stopPropagation(e);
-                            seleccionarCluster(layer);
+                            
+                            // 1. Extraemos solo el nombre
+                            var nombre = 'Cluster';
+                            try {
+                                if (layer.feature && layer.feature.properties && layer.feature.properties.name) nombre = layer.feature.properties.name;
+                                else if (typeof layer.getPopup === 'function' && layer.getPopup()) nombre = layer.getPopup().getContent();
+                            } catch (err) {}
+                            nombre = String(nombre).replace(/<[^>]*>/g, '').trim() || 'Cluster';
+                            
+                            // 2. Mostramos el popup EXACTAMENTE donde se hizo clic (e.latlng)
+                            // y le decimos al mapa que no se mueva (autoPan: false)
+                            L.popup({ autoPan: false })
+                                .setLatLng(e.latlng)
+                                .setContent('<b>' + nombre + '</b>')
+                                .openOn(map);
                         });
                     }
                 });
@@ -871,18 +886,11 @@
                         '<span class="leyenda-swatch" style="background:' + g.color + '"></span>' +
                         '<span class="leyenda-texto" title="' + nombres.replace(/"/g, '') + '">' + nombres + '</span>' +
                         '<span class="leyenda-conteo">' + g.capas.length + '</span>';
-                    fila.addEventListener('click', function () {
-                        document.querySelectorAll('.leyenda-fila.seleccionada').forEach(function (el) { el.classList.remove('seleccionada'); });
-                        fila.classList.add('seleccionada');
-                        var grupo = L.featureGroup(g.capas);
-                        var b = grupo.getBounds();
-                        if (b.isValid()) map.fitBounds(b, { maxZoom: 17 });
-                        deseleccionarCluster();
-                        g.capas.forEach(function (l) {
-                            if (l.setStyle) l.setStyle({ weight: 4, color: '#111827', dashArray: null });
-                            if (l.bringToFront) l.bringToFront();
+                        fila.addEventListener('click', function () {
+                            var grupo = L.featureGroup(g.capas);
+                            var b = grupo.getBounds();
+                            if (b.isValid()) map.fitBounds(b, { maxZoom: 17 });
                         });
-                    });
                     contenedor.appendChild(fila);
                 });
             } catch (err) {
@@ -983,7 +991,8 @@
             var utm = parseUTM(texto);
             if (utm) return utm;
 
-            var regexDMS = /(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?)[′''\s]+(\d+(?:\.\d+)?)"?[″""\s]*([NSEWO])/gi;
+            // MEJORA 1: Tolerancia a distintos tipos de comillas y símbolos para Grados/Minutos/Segundos
+            var regexDMS = /(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?)[′'’\s]+(\d+(?:\.\d+)?)[″"”\s]*([NSEWO])/gi;
             var matches = [...texto.matchAll(regexDMS)];
             if (matches.length === 2) {
                 var lat = dmsToDecimal(matches[0][1], matches[0][2], matches[0][3], matches[0][4]);
@@ -991,7 +1000,8 @@
                 return { lat: lat, lng: lng };
             }
 
-            var cleanStr = texto.replace(/[,;]/g, ' ');
+            // MEJORA 2: Limpieza de símbolo de grados (°) en coordenadas decimales directas
+            var cleanStr = texto.replace(/[,;°]/g, ' '); 
             var partes = cleanStr.trim().split(/\s+/);
             if (partes.length >= 2) {
                 var latD = parseFloat(partes[0]);
@@ -1185,7 +1195,7 @@
         map.on('click', function (e) {
             if (modoActivo === 'measure') { addMeasurePoint(e.latlng); return; }
             if (modoActivo === 'draw') { addCustomMarker(e.latlng); return; }
-            deseleccionarCluster();
+            map.closePopup(); // Cierra el nombre del cluster si tocas fuera
         });
 
         /* ==================================================================
