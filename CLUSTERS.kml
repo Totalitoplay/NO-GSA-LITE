@@ -725,45 +725,63 @@
         var capaKml = new L.FeatureGroup();
         map.addLayer(capaKml);
 
-        /* Esta función extrae los nombres ocultos, desactiva los popups nativos y asigna nuestros clics */
-        function procesarCapasKML(layer) {
-            // Si la capa tiene sub-capas (carpetas en el KML), aplicamos recursión
-            if (layer.eachLayer) {
-                layer.eachLayer(procesarCapasKML);
+        /*
+           Esta función:
+           1) Extrae el nombre real del Placemark (desde feature.properties.name o desde el
+              popup nativo que arma leaflet-kml) y lo HEREDA hacia las capas hijas, porque en
+              muchos KML el popup con el nombre queda en el grupo contenedor del Placemark y
+              no en la geometría "hoja" (Polygon/Marker) que es la que realmente recibe el clic.
+           2) Sólo engancha el manejador de clic interactivo (el que respeta modoActivo) en las
+              capas "hoja" (L.Marker o L.Path: Polygon/Polyline/Circle/Rectangle), NUNCA en
+              grupos (L.LayerGroup/L.FeatureGroup). Antes también se enganchaba en los grupos
+              porque L.FeatureGroup expone setStyle, y como Leaflet reenvía los eventos de sus
+              hijos hacia el grupo, un solo clic disparaba DOS manejadores (uno con el nombre
+              correcto y otro con "Cluster" por defecto), y en modo medición uno de los dos
+              seguía abriendo el popup del cluster en lugar de solo agregar el punto.
+        */
+        function procesarCapasKML(layer, nombreHeredado) {
+            var nombreActual = nombreHeredado;
+
+            // Intentar extraer un nombre propio en este nivel (antes de destruir nada)
+            if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
+                nombreActual = layer.feature.properties.name;
+            } else if (typeof layer.getPopup === 'function' && layer.getPopup()) {
+                nombreActual = layer.getPopup().getContent();
             }
 
-            // Si la capa es un polígono, línea o marcador visible
-            if (layer.setStyle || layer instanceof L.Marker) {
-                var nombre = 'Cluster';
+            if (nombreActual != null) {
+                nombreActual = String(nombreActual).replace(/<[^>]*>/g, '').trim();
+            }
 
-                // 1. Intentar sacar el nombre desde las propiedades del archivo
-                if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
-                    nombre = layer.feature.properties.name;
-                }
-                // 2. Si el plugin Leaflet-KML ya lo forzó en un popup nativo, lo extraemos antes de destruirlo
-                else if (typeof layer.getPopup === 'function' && layer.getPopup()) {
-                    nombre = layer.getPopup().getContent();
-                }
+            // Quitamos el popup nativo en este nivel para que no interfiera (se use o no el nombre)
+            if (typeof layer.unbindPopup === 'function') {
+                layer.unbindPopup();
+            }
 
-                // Limpiamos cualquier etiqueta HTML basura (<br>, <h2>) que venga de la descripción
-                nombre = String(nombre).replace(/<[^>]*>/g, '').trim() || 'Cluster';
-                layer._nombreCluster = nombre;
+            // Recursión: heredamos hacia los hijos el nombre encontrado hasta ahora
+            if (layer.eachLayer) {
+                layer.eachLayer(function (hijo) {
+                    procesarCapasKML(hijo, nombreActual);
+                });
+            }
 
-                // 3. Matamos el comportamiento nativo del popup para que no interfiera
-                if (typeof layer.unbindPopup === 'function') {
-                    layer.unbindPopup();
-                }
+            // Sólo las formas finales reciben el manejador de clic interactivo.
+            // Se excluyen explícitamente los grupos, aunque tengan setStyle.
+            var esHoja = (layer instanceof L.Marker) || (layer instanceof L.Path);
+            if (esHoja) {
+                layer._nombreCluster = nombreActual || 'Cluster';
 
-                // 4. Aseguramos que la capa escuche solo nuestra lógica
                 layer.off('click');
                 layer.on('click', function (e) {
-                    L.DomEvent.stopPropagation(e);
+                    L.DomEvent.stop(e);
 
                     if (modoActivo === 'measure') {
+                        map.closePopup();
                         addMeasurePoint(e.latlng);
                         return;
                     }
                     if (modoActivo === 'draw') {
+                        map.closePopup();
                         addCustomMarker(e.latlng);
                         return;
                     }
