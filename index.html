@@ -907,7 +907,6 @@
             var plusCode = '-';
             try {
                 var fullCode = OpenLocationCode.encode(lat, lng);
-                // Cortamos los primeros 4 dígitos del código general para obtener el código corto local
                 plusCode = fullCode.substring(4) + " Juárez, Chihuahua";
             } catch (e) {
                 console.error("No se pudo codificar el Plus Code", e);
@@ -1059,14 +1058,25 @@
 
         var marcadoresCustom = [];
         var contadorMarcadores = 0;
+        
         function generarPopupMarcador(latlng, id) {
             var dms = decimalToDMS(latlng.lat, true) + ' ' + decimalToDMS(latlng.lng, false);
+            var plusCode = '-';
+            try {
+                var fullCode = OpenLocationCode.encode(latlng.lat, latlng.lng);
+                plusCode = fullCode.substring(4) + " Juárez, Chihuahua";
+            } catch (e) {
+                console.error("No se pudo codificar el Plus Code", e);
+            }
+
             return '<div class="popup-contenido">' +
                 '<div class="popup-fila"><b>Decimal:</b> ' + latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6) + '</div>' +
                 '<div class="popup-fila"><b>DMS:</b> ' + dms + '</div>' +
+                '<div class="popup-fila"><b>Plus Code:</b> ' + plusCode + '</div>' +
                 '<button class="popup-btn-eliminar" onclick="eliminarMarcador(' + id + ')">Eliminar marcador</button>' +
                 '</div>';
         }
+        
         function addCustomMarker(latlng) {
             var id = contadorMarcadores++;
             var marker = L.marker(latlng, { draggable: true }).addTo(map);
@@ -1075,6 +1085,7 @@
             marker.on('dragend', function (e) { marker.setPopupContent(generarPopupMarcador(e.target.getLatLng(), id)); });
             marcadoresCustom.push(marker);
         }
+        
         function eliminarMarcador(id) {
             var idx = marcadoresCustom.findIndex(function (m) { return m._idPersonalizado === id; });
             if (idx > -1) { map.removeLayer(marcadoresCustom[idx]); marcadoresCustom.splice(idx, 1); }
@@ -1085,6 +1096,11 @@
             if (modoActivo === 'measure') { addMeasurePoint(e.latlng); return; }
             if (modoActivo === 'draw') { addCustomMarker(e.latlng); return; }
             map.closePopup(); 
+        });
+
+        /* Mantener presionado (móvil) o clic derecho (PC) para colocar marcador rápido */
+        map.on('contextmenu', function (e) {
+            addCustomMarker(e.latlng);
         });
 
         /* ==================================================================
