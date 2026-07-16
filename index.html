@@ -772,7 +772,7 @@
                 layer._nombreCluster = nombreActual || 'Cluster';
 
                 layer.off('click');
-                layer.on('click', function (e) {
+                /*layer.on('click', function (e) {
                     L.DomEvent.stop(e);
 
                     if (modoActivo === 'measure') {
@@ -791,7 +791,7 @@
                         .setLatLng(e.latlng)
                         .setContent('<b>' + layer._nombreCluster + '</b>')
                         .openOn(map);
-                });
+                });*/
             }
         }
 
