@@ -178,6 +178,7 @@
         #search-panel { top: 66px; left: 16px; }
         #bookmarks-panel { top: 66px; left: 16px; }
         #layers-panel { top: 66px; right: 16px; }
+        #legend-panel { top: 66px; right: 16px; }
 
         .panel-titulo {
             font-size: 12px;
@@ -291,6 +292,8 @@
         .layers-panel-section { margin-bottom: 16px; }
         .layers-panel-section:last-child { margin-bottom: 0; }
         .switch-fila { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink); margin-bottom: 8px; cursor: pointer; }
+        .opacidad-fila { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--ink-muted); }
+        .opacidad-fila input[type="range"] { width: 100%; accent-color: var(--accent); }
 
         /* Marcadores guardados */
         .bookmarks-panel-header { display: flex; gap: 6px; margin-bottom: 12px; }
@@ -311,6 +314,16 @@
         }
         .marcador-borrar:hover { color: var(--danger); background: rgba(220,38,38,0.08); }
         .vacio { font-size: 12px; color: var(--ink-muted); text-align: center; padding: 16px 4px; }
+
+        /* Leyenda */
+        .leyenda-fila {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 4px; cursor: pointer; border-radius: var(--radius-sm);
+        }
+        .leyenda-fila:hover { background: rgba(15,23,42,0.04); }
+        .leyenda-swatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.1); }
+        .leyenda-texto { font-size: 12.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .leyenda-conteo { font-size: 11px; color: var(--ink-muted); margin-left: auto; flex-shrink: 0; }
 
         /* ============ RIEL DE HERRAMIENTAS (DERECHA) ============ */
         .right-rail {
@@ -428,13 +441,6 @@
             border: none; border-radius: 8px; cursor: pointer; font-size: 11.5px; font-weight: 600;
         }
         .popup-btn-eliminar:hover { background: rgba(220,38,38,0.15); }
-        .btn-copiar-mini {
-            background: transparent; border: none; cursor: pointer; padding: 4px;
-            border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center;
-            transition: all 0.2s ease; color: var(--ink-muted); flex-shrink: 0; margin-left: auto;
-        }
-        .btn-copiar-mini:hover { background: rgba(0, 0, 0, 0.06); color: var(--accent); }
-        .btn-copiar-mini svg { width: 14px; height: 14px; }
 
         @media print {
             .topbar, .right-rail, .panel-flotante, .mode-banner, .statusbar,
@@ -539,7 +545,15 @@
         <div class="layers-panel-section">
             <p class="panel-titulo">Capa de clusters (KML)</p>
             <label class="switch-fila"><input type="checkbox" id="toggle-kml" checked> Mostrar clusters</label>
+            <div class="opacidad-fila">Opacidad
+                <input type="range" id="opacidad-kml" min="10" max="100" value="100">
+            </div>
         </div>
+    </div>
+
+    <div class="panel-flotante" id="legend-panel">
+        <p class="panel-titulo">Leyenda de clusters</p>
+        <div id="leyenda-contenido"><div class="vacio">Cargando capa KML…</div></div>
     </div>
 
     <div class="right-rail">
@@ -551,6 +565,9 @@
         </button>
         <button class="icon-btn" id="btn-draw" title="Colocar marcador">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"></path></svg>
+        </button>
+        <button class="icon-btn" id="btn-legend" title="Leyenda de clusters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
         </button>
         <button class="icon-btn" id="btn-fullscreen" title="Pantalla completa">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M21 16v3a2 2 0 01-2 2h-3M8 21H5a2 2 0 01-2-2v-3"></path></svg>
@@ -584,9 +601,10 @@
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-kml@1.0.0/L.KML.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/openlocationcode/1.0.4/openlocationcode.min.js"></script>
+
     <script src="https://unpkg.com/proj4@2.9.0/dist/proj4.js"></script>
-    
     <script>
         /* ==================================================================
            1. CAPAS BASE
@@ -618,14 +636,13 @@
         };
         var ESTILOS_OSCUROS = new Set(['satelite']);
 
-        /* NOTA: Se añadió un renderer explícito con padding amplio (1.5) para evitar cortes de geometría pesada */
         var map = L.map('mapa', {
             center: CENTRO_INICIAL,
             zoom: ZOOM_INICIAL,
             zoomControl: false,
             attributionControl: false,
             layers: [capaGoogle],
-            renderer: L.canvas({ padding: 1.5, tolerance: 5 })
+            preferCanvas: true
         });
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
@@ -665,7 +682,7 @@
         /* ==================================================================
            2. PANELES DESPLEGABLES
            ================================================================== */
-        var IDS_PANELES = ['search-panel', 'bookmarks-panel', 'layers-panel'];
+        var IDS_PANELES = ['search-panel', 'bookmarks-panel', 'layers-panel', 'legend-panel'];
         function cerrarTodosPaneles() {
             IDS_PANELES.forEach(function (id) { document.getElementById(id).classList.remove('show'); });
         }
@@ -679,6 +696,7 @@
         document.getElementById('btn-toggle-search').addEventListener('click', function () { togglePanel('search-panel'); });
         document.getElementById('btn-bookmarks').addEventListener('click', function () { togglePanel('bookmarks-panel'); renderMarcadores(); });
         document.getElementById('btn-layers').addEventListener('click', function () { togglePanel('layers-panel'); });
+        document.getElementById('btn-legend').addEventListener('click', function () { togglePanel('legend-panel'); });
 
         document.getElementById('btn-home').addEventListener('click', function () {
             map.setView(CENTRO_INICIAL, ZOOM_INICIAL);
@@ -725,74 +743,6 @@
         var capaKml = new L.FeatureGroup();
         map.addLayer(capaKml);
 
-        /*
-           Esta función:
-           1) Extrae el nombre real del Placemark (desde feature.properties.name o desde el
-              popup nativo que arma leaflet-kml) y lo HEREDA hacia las capas hijas, porque en
-              muchos KML el popup con el nombre queda en el grupo contenedor del Placemark y
-              no en la geometría "hoja" (Polygon/Marker) que es la que realmente recibe el clic.
-           2) Sólo engancha el manejador de clic interactivo (el que respeta modoActivo) en las
-              capas "hoja" (L.Marker o L.Path: Polygon/Polyline/Circle/Rectangle), NUNCA en
-              grupos (L.LayerGroup/L.FeatureGroup). Antes también se enganchaba en los grupos
-              porque L.FeatureGroup expone setStyle, y como Leaflet reenvía los eventos de sus
-              hijos hacia el grupo, un solo clic disparaba DOS manejadores (uno con el nombre
-              correcto y otro con "Cluster" por defecto), y en modo medición uno de los dos
-              seguía abriendo el popup del cluster en lugar de solo agregar el punto.
-        */
-        function procesarCapasKML(layer, nombreHeredado) {
-            var nombreActual = nombreHeredado;
-
-            // Intentar extraer un nombre propio en este nivel (antes de destruir nada)
-            if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
-                nombreActual = layer.feature.properties.name;
-            } else if (typeof layer.getPopup === 'function' && layer.getPopup()) {
-                nombreActual = layer.getPopup().getContent();
-            }
-
-            if (nombreActual != null) {
-                nombreActual = String(nombreActual).replace(/<[^>]*>/g, '').trim();
-            }
-
-            // Quitamos el popup nativo en este nivel para que no interfiera (se use o no el nombre)
-            if (typeof layer.unbindPopup === 'function') {
-                layer.unbindPopup();
-            }
-
-            // Recursión: heredamos hacia los hijos el nombre encontrado hasta ahora
-            if (layer.eachLayer) {
-                layer.eachLayer(function (hijo) {
-                    procesarCapasKML(hijo, nombreActual);
-                });
-            }
-
-            // Sólo las formas finales reciben el manejador de clic interactivo.
-            // Se excluyen explícitamente los grupos, aunque tengan setStyle.
-            var esHoja = (layer instanceof L.Marker) || (layer instanceof L.Path);
-            if (esHoja) {
-                layer._nombreCluster = nombreActual || 'Cluster';
-
-                layer.off('click');
-                layer.on('click', function (e) {
-                    L.DomEvent.stopPropagation(e);
-
-                    if (modoActivo === 'measure') {
-                        addMeasurePoint(e.latlng);
-                        return;
-                    }
-                    if (modoActivo === 'draw') {
-                        addCustomMarker(e.latlng);
-                        return;
-                    }
-
-                    // Solo abre este popup si no hay ninguna herramienta activa
-                    L.popup({ autoPan: false })
-                        .setLatLng(e.latlng)
-                        .setContent('<b>' + layer._nombreCluster + '</b>')
-                        .openOn(map);
-                });
-            }
-        }
-
         fetch('CLUSTERS.kml')
             .then(function (res) { return res.text(); })
             .then(function (kmltext) {
@@ -800,11 +750,43 @@
                 var kml = parser.parseFromString(kmltext, 'text/xml');
                 var track = new L.KML(kml);
 
-                procesarCapasKML(track);
                 capaKml.addLayer(track);
+
+                track.eachLayer(function (layer) {
+                    if (layer.setStyle) {
+                        layer.on('click', function (e) {
+                            L.DomEvent.stopPropagation(e); // Evita que el clic pase al fondo del mapa
+                            
+                            // SI ESTAMOS EN MODO MEDIR O DIBUJAR, usamos esa lógica y NO abrimos el popup
+                            if (modoActivo === 'measure') { 
+                                addMeasurePoint(e.latlng); 
+                                return; 
+                            }
+                            if (modoActivo === 'draw') { 
+                                addCustomMarker(e.latlng); 
+                                return; 
+                            }
+                            
+                            // Si no hay modo activo, mostramos el nombre del clúster
+                            var nombre = 'Cluster';
+                            try {
+                                if (layer.feature && layer.feature.properties && layer.feature.properties.name) nombre = layer.feature.properties.name;
+                                else if (typeof layer.getPopup === 'function' && layer.getPopup()) nombre = layer.getPopup().getContent();
+                            } catch (err) {}
+                            nombre = String(nombre).replace(/<[^>]*>/g, '').trim() || 'Cluster';
+                            
+                            L.popup({ autoPan: false })
+                                .setLatLng(e.latlng)
+                                .setContent('<b>' + nombre + '</b>')
+                                .openOn(map);
+                        });
+                    }
+                });
 
                 var limites = track.getBounds();
                 if (limites.isValid()) map.fitBounds(limites);
+
+                construirLeyenda(track);
             })
             .catch(function (err) {
                 console.error('Error cargando KML:', err);
@@ -815,6 +797,72 @@
             if (e.target.checked) { if (!map.hasLayer(capaKml)) map.addLayer(capaKml); }
             else { if (map.hasLayer(capaKml)) map.removeLayer(capaKml); }
         });
+
+        document.getElementById('opacidad-kml').addEventListener('input', function (e) {
+            if (!capaKml) return;
+            var val = parseInt(e.target.value, 10) / 100;
+            try {
+                capaKml.eachLayer(function (grupo) {
+                    if (grupo.eachLayer) {
+                        grupo.eachLayer(function (l) {
+                            if (l.setStyle) l.setStyle({ opacity: val, fillOpacity: val * 0.6 });
+                            if (l.setOpacity) l.setOpacity(val);
+                        });
+                    }
+                });
+            } catch (err) { console.error(err); }
+        });
+
+        function construirLeyenda(capa) {
+            try {
+                var grupos = new Map();
+                capa.eachLayer(function (layer) {
+                    var nombre = 'Sin nombre';
+                    try {
+                        if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
+                            nombre = layer.feature.properties.name;
+                        } else if (layer.options && layer.options.name) {
+                            nombre = layer.options.name;
+                        } else if (typeof layer.getPopup === 'function' && layer.getPopup()) {
+                            nombre = layer.getPopup().getContent() || nombre;
+                        }
+                    } catch (e) {}
+                    var color = null;
+                    if (layer.options) color = layer.options.fillColor || layer.options.color || null;
+                    if (!color) return;
+                    if (!grupos.has(color)) grupos.set(color, { color: color, nombres: new Set(), capas: [] });
+                    var g = grupos.get(color);
+                    g.nombres.add(String(nombre).replace(/<[^>]*>/g, '').trim() || 'Sin nombre');
+                    g.capas.push(layer);
+                });
+
+                var contenedor = document.getElementById('leyenda-contenido');
+                if (grupos.size === 0) {
+                    contenedor.innerHTML = '<div class="vacio">La capa no define colores por estilo.</div>';
+                    return;
+                }
+                contenedor.innerHTML = '';
+                grupos.forEach(function (g) {
+                    var fila = document.createElement('div');
+                    fila.className = 'leyenda-fila';
+                    var nombres = Array.from(g.nombres).slice(0, 3).join(', ');
+                    fila.innerHTML =
+                        '<span class="leyenda-swatch" style="background:' + g.color + '"></span>' +
+                        '<span class="leyenda-texto" title="' + nombres.replace(/"/g, '') + '">' + nombres + '</span>' +
+                        '<span class="leyenda-conteo">' + g.capas.length + '</span>';
+                    
+                    fila.addEventListener('click', function () {
+                        var grupo = L.featureGroup(g.capas);
+                        var b = grupo.getBounds();
+                        if (b.isValid()) map.fitBounds(b, { maxZoom: 17 });
+                    });
+                    
+                    contenedor.appendChild(fila);
+                });
+            } catch (err) {
+                console.error('No se pudo construir la leyenda:', err);
+            }
+        }
 
         /* ==================================================================
            4. MARCADOR DE BÚSQUEDA (solo aparece al buscar coordenadas)
@@ -909,6 +957,7 @@
             var utm = parseUTM(texto);
             if (utm) return utm;
 
+            // MEJORA 1: Tolerancia a distintos tipos de comillas y símbolos para Grados/Minutos/Segundos
             var regexDMS = /(\d+(?:\.\d+)?)[°\s]+(\d+(?:\.\d+)?)[′'’\s]+(\d+(?:\.\d+)?)[″"”\s]*([NSEWO])/gi;
             var matches = [...texto.matchAll(regexDMS)];
             if (matches.length === 2) {
@@ -917,6 +966,7 @@
                 return { lat: lat, lng: lng };
             }
 
+            // MEJORA 2: Limpieza de símbolo de grados (°) en coordenadas decimales directas
             var cleanStr = texto.replace(/[,;°]/g, ' '); 
             var partes = cleanStr.trim().split(/\s+/);
             if (partes.length >= 2) {
@@ -934,8 +984,7 @@
             var dmsLng = decimalToDMS(lng, false);
             var plusCode = '-';
             try {
-                var fullCode = OpenLocationCode.encode(lat, lng);
-                plusCode = fullCode.substring(4) + " Juárez, Chihuahua";
+                plusCode = OpenLocationCode.encode(lat, lng);
             } catch (e) {
                 console.error("No se pudo codificar el Plus Code", e);
             }
@@ -971,14 +1020,6 @@
 
         function copiarTexto(idElemento) {
             var texto = document.getElementById(idElemento).textContent;
-            navigator.clipboard.writeText(texto).then(function () {
-                var toast = document.getElementById('toast');
-                toast.classList.add('show');
-                setTimeout(function () { toast.classList.remove('show'); }, 2000);
-            });
-        }
-        
-        function copiarTextoDirecto(texto) {
             navigator.clipboard.writeText(texto).then(function () {
                 var toast = document.getElementById('toast');
                 toast.classList.add('show');
@@ -1094,29 +1135,14 @@
 
         var marcadoresCustom = [];
         var contadorMarcadores = 0;
-        
         function generarPopupMarcador(latlng, id) {
             var dms = decimalToDMS(latlng.lat, true) + ' ' + decimalToDMS(latlng.lng, false);
-            var plusCode = '-';
-            try {
-                var fullCode = OpenLocationCode.encode(latlng.lat, latlng.lng);
-                plusCode = fullCode.substring(4) + " Juárez, Chihuahua";
-            } catch (e) {
-                console.error("No se pudo codificar el Plus Code", e);
-            }
-
-            var btnHtml = '<button class="btn-copiar-mini" onclick="copiarTextoDirecto(\'' + plusCode + '\')" title="Copiar Plus Code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>';
-
             return '<div class="popup-contenido">' +
-                '<div class="popup-fila"><b>Decimal:</b><br>' + latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6) + '</div>' +
-                '<div class="popup-fila"><b>DMS:</b><br>' + dms + '</div>' +
-                '<div class="popup-fila" style="display: flex; align-items: center; justify-content: space-between;">' +
-                '<div><b>Plus Code:</b><br>' + plusCode + '</div>' + btnHtml +
-                '</div>' +
+                '<div class="popup-fila"><b>Decimal:</b> ' + latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6) + '</div>' +
+                '<div class="popup-fila"><b>DMS:</b> ' + dms + '</div>' +
                 '<button class="popup-btn-eliminar" onclick="eliminarMarcador(' + id + ')">Eliminar marcador</button>' +
                 '</div>';
         }
-        
         function addCustomMarker(latlng) {
             var id = contadorMarcadores++;
             var marker = L.marker(latlng, { draggable: true }).addTo(map);
@@ -1125,7 +1151,6 @@
             marker.on('dragend', function (e) { marker.setPopupContent(generarPopupMarcador(e.target.getLatLng(), id)); });
             marcadoresCustom.push(marker);
         }
-        
         function eliminarMarcador(id) {
             var idx = marcadoresCustom.findIndex(function (m) { return m._idPersonalizado === id; });
             if (idx > -1) { map.removeLayer(marcadoresCustom[idx]); marcadoresCustom.splice(idx, 1); }
@@ -1135,12 +1160,7 @@
         map.on('click', function (e) {
             if (modoActivo === 'measure') { addMeasurePoint(e.latlng); return; }
             if (modoActivo === 'draw') { addCustomMarker(e.latlng); return; }
-            map.closePopup(); 
-        });
-
-        /* Mantener presionado (móvil) o clic derecho (PC) para colocar marcador rápido */
-        map.on('contextmenu', function (e) {
-            addCustomMarker(e.latlng);
+            map.closePopup(); // Cierra el nombre del cluster si tocas fuera
         });
 
         /* ==================================================================
