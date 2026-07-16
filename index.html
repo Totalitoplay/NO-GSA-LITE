@@ -725,10 +725,56 @@
         var capaKml = new L.FeatureGroup();
         map.addLayer(capaKml);
 
-        /* Esta función erradica los popups que Leaflet-KML aplica en automático */
-        function removerPopupsNativos(layer) {
-            if (layer.unbindPopup) layer.unbindPopup();
-            if (layer.eachLayer) layer.eachLayer(removerPopupsNativos);
+        /* Esta función extrae los nombres ocultos, desactiva los popups nativos y asigna nuestros clics */
+        function procesarCapasKML(layer) {
+            // Si la capa tiene sub-capas (carpetas en el KML), aplicamos recursión
+            if (layer.eachLayer) {
+                layer.eachLayer(procesarCapasKML);
+            }
+
+            // Si la capa es un polígono, línea o marcador visible
+            if (layer.setStyle || layer instanceof L.Marker) {
+                var nombre = 'Cluster';
+
+                // 1. Intentar sacar el nombre desde las propiedades del archivo
+                if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
+                    nombre = layer.feature.properties.name;
+                }
+                // 2. Si el plugin Leaflet-KML ya lo forzó en un popup nativo, lo extraemos antes de destruirlo
+                else if (typeof layer.getPopup === 'function' && layer.getPopup()) {
+                    nombre = layer.getPopup().getContent();
+                }
+
+                // Limpiamos cualquier etiqueta HTML basura (<br>, <h2>) que venga de la descripción
+                nombre = String(nombre).replace(/<[^>]*>/g, '').trim() || 'Cluster';
+                layer._nombreCluster = nombre;
+
+                // 3. Matamos el comportamiento nativo del popup para que no interfiera
+                if (typeof layer.unbindPopup === 'function') {
+                    layer.unbindPopup();
+                }
+
+                // 4. Aseguramos que la capa escuche solo nuestra lógica
+                layer.off('click');
+                layer.on('click', function (e) {
+                    L.DomEvent.stopPropagation(e);
+
+                    if (modoActivo === 'measure') {
+                        addMeasurePoint(e.latlng);
+                        return;
+                    }
+                    if (modoActivo === 'draw') {
+                        addCustomMarker(e.latlng);
+                        return;
+                    }
+
+                    // Solo abre este popup si no hay ninguna herramienta activa
+                    L.popup({ autoPan: false })
+                        .setLatLng(e.latlng)
+                        .setContent('<b>' + layer._nombreCluster + '</b>')
+                        .openOn(map);
+                });
+            }
         }
 
         fetch('CLUSTERS.kml')
@@ -738,40 +784,8 @@
                 var kml = parser.parseFromString(kmltext, 'text/xml');
                 var track = new L.KML(kml);
 
-                /* Aplicamos la purga de popups nativos */
-                removerPopupsNativos(track);
+                procesarCapasKML(track);
                 capaKml.addLayer(track);
-
-                track.eachLayer(function (layer) {
-                    if (layer.setStyle) {
-                        layer.on('click', function (e) {
-                            L.DomEvent.stopPropagation(e); 
-                            
-                            /* Si estamos en modo de dibujo o medición, no se abren popups de clústeres */
-                            if (modoActivo === 'measure') { 
-                                addMeasurePoint(e.latlng); 
-                                return; 
-                            }
-                            if (modoActivo === 'draw') { 
-                                addCustomMarker(e.latlng); 
-                                return; 
-                            }
-                            
-                            var nombre = 'Cluster';
-                            try {
-                                if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
-                                    nombre = layer.feature.properties.name;
-                                }
-                            } catch (err) {}
-                            nombre = String(nombre).replace(/<[^>]*>/g, '').trim() || 'Cluster';
-                            
-                            L.popup({ autoPan: false })
-                                .setLatLng(e.latlng)
-                                .setContent('<b>' + nombre + '</b>')
-                                .openOn(map);
-                        });
-                    }
-                });
 
                 var limites = track.getBounds();
                 if (limites.isValid()) map.fitBounds(limites);
