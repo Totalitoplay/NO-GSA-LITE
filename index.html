@@ -773,13 +773,15 @@
 
                 layer.off('click');
                 layer.on('click', function (e) {
-                    L.DomEvent.stopPropagation(e);
+                    L.DomEvent.stop(e);
 
                     if (modoActivo === 'measure') {
+                        map.closePopup();
                         addMeasurePoint(e.latlng);
                         return;
                     }
                     if (modoActivo === 'draw') {
+                        map.closePopup();
                         addCustomMarker(e.latlng);
                         return;
                     }
