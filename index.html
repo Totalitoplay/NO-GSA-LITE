@@ -291,8 +291,6 @@
         .layers-panel-section { margin-bottom: 16px; }
         .layers-panel-section:last-child { margin-bottom: 0; }
         .switch-fila { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink); margin-bottom: 8px; cursor: pointer; }
-        .opacidad-fila { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--ink-muted); }
-        .opacidad-fila input[type="range"] { width: 100%; accent-color: var(--accent); }
 
         /* Marcadores guardados */
         .bookmarks-panel-header { display: flex; gap: 6px; margin-bottom: 12px; }
@@ -430,6 +428,13 @@
             border: none; border-radius: 8px; cursor: pointer; font-size: 11.5px; font-weight: 600;
         }
         .popup-btn-eliminar:hover { background: rgba(220,38,38,0.15); }
+        .btn-copiar-mini {
+            background: transparent; border: none; cursor: pointer; padding: 4px;
+            border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; color: var(--ink-muted); flex-shrink: 0; margin-left: auto;
+        }
+        .btn-copiar-mini:hover { background: rgba(0, 0, 0, 0.06); color: var(--accent); }
+        .btn-copiar-mini svg { width: 14px; height: 14px; }
 
         @media print {
             .topbar, .right-rail, .panel-flotante, .mode-banner, .statusbar,
@@ -534,9 +539,6 @@
         <div class="layers-panel-section">
             <p class="panel-titulo">Capa de clusters (KML)</p>
             <label class="switch-fila"><input type="checkbox" id="toggle-kml" checked> Mostrar clusters</label>
-            <div class="opacidad-fila">Opacidad
-                <input type="range" id="opacidad-kml" min="10" max="100" value="100">
-            </div>
         </div>
     </div>
 
@@ -616,13 +618,14 @@
         };
         var ESTILOS_OSCUROS = new Set(['satelite']);
 
+        /* NOTA: Se añadió un renderer explícito con padding amplio (1.5) para evitar cortes de geometría pesada */
         var map = L.map('mapa', {
             center: CENTRO_INICIAL,
             zoom: ZOOM_INICIAL,
             zoomControl: false,
             attributionControl: false,
             layers: [capaGoogle],
-            preferCanvas: true
+            renderer: L.canvas({ padding: 1.5, tolerance: 5 })
         });
 
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
@@ -722,6 +725,12 @@
         var capaKml = new L.FeatureGroup();
         map.addLayer(capaKml);
 
+        /* Esta función erradica los popups que Leaflet-KML aplica en automático */
+        function removerPopupsNativos(layer) {
+            if (layer.unbindPopup) layer.unbindPopup();
+            if (layer.eachLayer) layer.eachLayer(removerPopupsNativos);
+        }
+
         fetch('CLUSTERS.kml')
             .then(function (res) { return res.text(); })
             .then(function (kmltext) {
@@ -729,6 +738,8 @@
                 var kml = parser.parseFromString(kmltext, 'text/xml');
                 var track = new L.KML(kml);
 
+                /* Aplicamos la purga de popups nativos */
+                removerPopupsNativos(track);
                 capaKml.addLayer(track);
 
                 track.eachLayer(function (layer) {
@@ -736,6 +747,7 @@
                         layer.on('click', function (e) {
                             L.DomEvent.stopPropagation(e); 
                             
+                            /* Si estamos en modo de dibujo o medición, no se abren popups de clústeres */
                             if (modoActivo === 'measure') { 
                                 addMeasurePoint(e.latlng); 
                                 return; 
@@ -747,8 +759,9 @@
                             
                             var nombre = 'Cluster';
                             try {
-                                if (layer.feature && layer.feature.properties && layer.feature.properties.name) nombre = layer.feature.properties.name;
-                                else if (typeof layer.getPopup === 'function' && layer.getPopup()) nombre = layer.getPopup().getContent();
+                                if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
+                                    nombre = layer.feature.properties.name;
+                                }
                             } catch (err) {}
                             nombre = String(nombre).replace(/<[^>]*>/g, '').trim() || 'Cluster';
                             
@@ -771,21 +784,6 @@
             if (!capaKml) return;
             if (e.target.checked) { if (!map.hasLayer(capaKml)) map.addLayer(capaKml); }
             else { if (map.hasLayer(capaKml)) map.removeLayer(capaKml); }
-        });
-
-        document.getElementById('opacidad-kml').addEventListener('input', function (e) {
-            if (!capaKml) return;
-            var val = parseInt(e.target.value, 10) / 100;
-            try {
-                capaKml.eachLayer(function (grupo) {
-                    if (grupo.eachLayer) {
-                        grupo.eachLayer(function (l) {
-                            if (l.setStyle) l.setStyle({ opacity: val, fillOpacity: val * 0.6 });
-                            if (l.setOpacity) l.setOpacity(val);
-                        });
-                    }
-                });
-            } catch (err) { console.error(err); }
         });
 
         /* ==================================================================
@@ -949,6 +947,14 @@
                 setTimeout(function () { toast.classList.remove('show'); }, 2000);
             });
         }
+        
+        function copiarTextoDirecto(texto) {
+            navigator.clipboard.writeText(texto).then(function () {
+                var toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(function () { toast.classList.remove('show'); }, 2000);
+            });
+        }
 
         /* ==================================================================
            6. MODOS: MEDIR DISTANCIA / COLOCAR MARCADORES
@@ -1069,10 +1075,14 @@
                 console.error("No se pudo codificar el Plus Code", e);
             }
 
+            var btnHtml = '<button class="btn-copiar-mini" onclick="copiarTextoDirecto(\'' + plusCode + '\')" title="Copiar Plus Code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>';
+
             return '<div class="popup-contenido">' +
-                '<div class="popup-fila"><b>Decimal:</b> ' + latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6) + '</div>' +
-                '<div class="popup-fila"><b>DMS:</b> ' + dms + '</div>' +
-                '<div class="popup-fila"><b>Plus Code:</b> ' + plusCode + '</div>' +
+                '<div class="popup-fila"><b>Decimal:</b><br>' + latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6) + '</div>' +
+                '<div class="popup-fila"><b>DMS:</b><br>' + dms + '</div>' +
+                '<div class="popup-fila" style="display: flex; align-items: center; justify-content: space-between;">' +
+                '<div><b>Plus Code:</b><br>' + plusCode + '</div>' + btnHtml +
+                '</div>' +
                 '<button class="popup-btn-eliminar" onclick="eliminarMarcador(' + id + ')">Eliminar marcador</button>' +
                 '</div>';
         }
